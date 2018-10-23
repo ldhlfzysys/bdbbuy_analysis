@@ -18,10 +18,9 @@ Vue.use(VueRouter);
 Vue.use(VueResource);
 Vue.use(iView);
 
-
 const router = new VueRouter({
   mode: 'history',
-  base: __dirname,
+  base: '/bdbbuyanalysis/',
   routes: [
     {
       path: '/',

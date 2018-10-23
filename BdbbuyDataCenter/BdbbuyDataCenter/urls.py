@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url, include
+from django.conf import settings
 
 from Order import urls as order_urls
 from Product import urls as product_urls
@@ -25,3 +26,4 @@ urlpatterns = [
     path('order/', include(order_urls)),
     path('product/', include(product_urls))
 ]
+
