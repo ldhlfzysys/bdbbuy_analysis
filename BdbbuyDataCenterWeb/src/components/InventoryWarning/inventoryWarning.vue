@@ -105,19 +105,19 @@
           {
             title: 'SKU',
             key: 'sku',
-            width: 150,
+            // width: 150,
             align: 'center',
           },
           {
             title: '售价',
             key: 'price',
-            width: 150,
+            // width: 150,
             align: 'center',
           },
           {
             title: '保质期',
             key: 'quality_date',
-            width: 200,
+            // width: 200,
             align: 'center',
           },
           ]
