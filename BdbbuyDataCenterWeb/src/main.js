@@ -18,6 +18,7 @@ Vue.use(VueRouter);
 Vue.use(VueResource);
 Vue.use(iView);
 
+var route_base_path = process.env.NODE_ENV === 'development' ? '' : '/bdbbuyanalysis'
 
 const router = new VueRouter({
   mode: 'history',
@@ -28,11 +29,15 @@ const router = new VueRouter({
       component: saleData
     },
     {
-      path: '/inventoryWarning',
+      path: '/bdbbuyanalysis',
+      component: saleData
+    },
+    {
+      path: route_base_path + '/inventoryWarning',
       component: inventoryWarning
     },
     {
-      path: '/saleData',
+      path: route_base_path + '/saleData',
       component: saleData
     }
 
