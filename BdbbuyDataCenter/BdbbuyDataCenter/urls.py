@@ -16,12 +16,23 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url, include
+from django.conf import settings
 
 from Order import urls as order_urls
 from Product import urls as product_urls
 
-urlpatterns = [
+urlpatterns_debug = [
     path('admin/', admin.site.urls),
     path('order/', include(order_urls)),
     path('product/', include(product_urls))
 ]
+
+urlpatterns_production = [
+    path('bdbbuyanalysisserver/admin/', admin.site.urls),
+    path('bdbbuyanalysisserver/order/', include(order_urls)),
+    path('bdbbuyanalysisserver/product/', include(product_urls))
+]
+
+urlpatterns = urlpatterns_debug
+if (not settings.DEBUG):
+    urlpatterns = urlpatterns_production
