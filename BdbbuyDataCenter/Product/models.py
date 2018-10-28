@@ -5,6 +5,10 @@ from enum import Enum
 
 # custom
 from Tools.model_util import CModel
+from datetime import datetime, timedelta
+from Order.views import Orders
+
+import json
 
 # Create your models here.
 
@@ -62,6 +66,7 @@ class Product(CModel):
     create_at = models.CharField(max_length=30, blank=True, null=True)
     quality_date = models.CharField(max_length=30, blank=True, null=True)
     show_index = models.IntegerField(blank=True, null=True)
+    buy_limit = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -69,14 +74,59 @@ class Product(CModel):
 
     @classmethod
     def get_lowcount_outofdate_products(cls, **kwargs):
-        low_count = kwargs.get('low_count', 0)
+        low_count = kwargs.get('low_count', None)
+        out_of_date = kwargs.get('out_of_date', False)
+        order_day = kwargs.get('order_day', None)
         products = []
-        for stock in ProductStock.get_low_qty_data(low_count=low_count):
-            product_list = Product.objects.filter(product_id=stock.product_id)
-            if product_list and len(product_list) > 0:
-                product = product_list[0]
-                if ProductStatus.ProductOnsale.value == product.status:
-                    products.append(product)
+        if low_count:
+            # 按库存数进行查找
+            for stock in ProductStock.get_low_qty_data(low_count=low_count):
+                product_list = Product.objects.filter(product_id=stock.product_id)
+                if product_list and len(product_list) > 0:
+                    product = product_list[0]
+                    if ProductStatus.ProductOnsale.value == product.status:
+                        products.append(product.toJson())
+
+        if out_of_date:
+            # 查找过期的在线商品
+            product_list = Product.objects.exclude((Q(quality_date='') | Q(quality_date__isnull=True)))\
+                                          .filter(Q(status=ProductStatus.ProductOnsale.value),
+                                                  Q(quality_date__lt=datetime.now()))
+            products.extend([product.toJson() for product in product_list])
+
+        if order_day:
+            # 按照过去一段时间销量查找库存较少数据
+            product_list = Product.objects.filter(status=ProductStatus.ProductOnsale.value)
+            date_now = datetime.now().replace(hour=0, minute=0, second=0)
+            from_date = (date_now - timedelta(days=int(order_day))).strftime("%Y-%m-%d %H:%M:%S")
+            to_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            order_list = Orders.objects.filter(create_at__gte=from_date, create_at__lte=to_date)
+            order_dict = {}
+            for order in order_list:
+                for order_product in json.loads(order.product_desc):
+                    product_id = str(order_product['product_id'])
+                    product_count = int(order_product['product_count'])
+                    if order_dict.get(product_id, None):
+                        order_dict[product_id] = order_dict[product_id] + product_count
+                    else:
+                        order_dict[product_id] = product_count
+
+
+            for product in product_list:
+                stock_count = ProductStock.get_product_stock(product_id=product.product_id)
+                product_id_str = str(product.product_id)
+                if order_dict.get(product_id_str, None):
+                    if stock_count <= order_dict[product_id_str]:
+                        product_dic = product.toJson()
+                        product_dic['order_count'] = order_dict[product_id_str]
+                        product_dic['delta_count'] =  order_dict[product_id_str] - stock_count
+                        products.append(product_dic)
+                else:
+                    if stock_count <= LOW_QTY_COUNT:
+                        product_dic = product.toJson()
+                        product_dic['order_count'] = 0
+                        product_dic['delta_count'] = LOW_QTY_COUNT - stock_count
+                        products.append(product_dic)
         return products
 
     def toJson(self):
@@ -168,12 +218,10 @@ class ProductStock(CModel):
 
     @classmethod
     def get_product_stock(cls, product_id):
-        count = 0
+        count = None
         try:
             product = ProductStock.objects.get(product_id=product_id)
             count = product.qty
-            print(product.product_id)
-            print(product.qty)
         except Exception as e:
             print(e)
         return count

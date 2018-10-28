@@ -13,8 +13,8 @@
           库存预警
         </template>
         <MenuItem name="inventoryWarning_count" id="inventoryWarning_1">按个数筛选</MenuItem>
-        <MenuItem name="inventoryWarning_ordercount" id="inventoryWarning_2" disabled>按销量筛选</MenuItem>
-        <MenuItem name="inventoryWarning_date" id="inventoryWarning_3" disabled>筛选过期商品</MenuItem>
+        <MenuItem name="inventoryWarning_ordercount" id="inventoryWarning_2">按销量筛选</MenuItem>
+        <MenuItem name="inventoryWarning_date" id="inventoryWarning_3">筛选过期商品</MenuItem>
       </Submenu>
 
     </Menu>
@@ -40,7 +40,6 @@
 
     methods: {
       gotoPage:function (name) {
-        console.log(name)
         var pageName = name
         var routerParam = {path: pageName}
         if (name.indexOf('inventoryWarning_') != -1) {

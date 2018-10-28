@@ -10,12 +10,25 @@
         </Button>
         <small></small>
       </p>
+      <p :hidden="pageType!='ordercount'" style="margin-left: 0px;width: 300px">
+        <label >按过去</label>
+        <input type="text" class="normal" v-model="orderDay"/>
+        <label >天销量</label>
+        <Button v-on:click="getData">
+          查找
+        </Button>
+        <small></small>
+      </p>
+      <br>
+      <p style="margin-left: 0px;width: 360px">
+        <label style="text-align: left">(查找的数据包含：库存低于{{orderDay}}天销量的数据和总库存低于5的数据)</label>
+      </p>
 
 
     </div>
     <br>
 
-    <Table  :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
+    <Table  border :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
     <div style="margin: 20px;overflow: hidden">
       <div style="float: right;">
         <Page ref="pages" :total="totalCount" :current="pageCurrent" @on-change="changePage"
@@ -31,6 +44,13 @@
 
   export default {
     name: 'inventoryWarning',
+    watch: {
+      '$route' (to, from) {
+        this.pageType = this.$route.query.type
+        this.setTableColumn()
+        this.getData()
+      },
+    },
     data() {
       return {
         page_size_opts: [20, 40, 50, 100],
@@ -41,8 +61,10 @@
         allProductList: [],
         pageType: 'count',
         countInfo: 5,
+        orderDay: 7,
         pageCurrent: 1,
-        tableLoading: false
+        tableLoading: false,
+        cancelTokenFn: null
 
       }
 
@@ -50,9 +72,9 @@
     mounted: function () {
       // 页面加载
       console.log('这里是库存预警页面')
+      this.pageType = this.$route.query.type
       this.setTableColumn()
       this.getData()
-      this.pageType = this.$route.query.type
     },
 
     methods: {
@@ -60,10 +82,18 @@
       getData:function () {
         this.tableData = []
         this.pageCurrent = 1
+        this.totalCount = 0
         this.tableLoading = true
         let url = serverBaseURL + 'product/getWarnigProduct'
         if (this.pageType == 'count') {
+          // 按照最低库存数查找
           url = url + '?lowCount=' + this.countInfo
+        } else if (this.pageType == 'date') {
+          // 查找过期商品
+          url = url + '?outOfDate=' + true
+        } else if (this.pageType == 'ordercount') {
+          // 按照销量查找库存数据
+          url = url + '?orderDay=' + this.orderDay
         }
         this.$http.get(url).then(function (response) {
           var status = response.status;
@@ -94,13 +124,7 @@
             title: '中文名',
             key: 'name',
             width: 200,
-            align: 'center',
-          },
-          {
-            title: '库存数量',
-            key: 'product_qty',
-            width: 100,
-            align: 'center',
+            align: 'left',
           },
           {
             title: 'SKU',
@@ -120,7 +144,30 @@
             // width: 200,
             align: 'center',
           },
-          ]
+          {
+            title: '库存数量',
+            key: 'product_qty',
+            // width: 100,
+            align: 'center',
+          },
+        ]
+        if (this.pageType == 'ordercount') {
+          var order_count_dic = {
+            title: '过去' + this.orderDay + '天销量',
+            key: 'order_count',
+            // width: 150,
+            align: 'center',
+          }
+          this.tableColumns.push(order_count_dic)
+          var delta_stock_dic =  {
+            title: '库存差值',
+            key: 'delta_count',
+            // width: 100,
+            align: 'center',
+          }
+          this.tableColumns.push(delta_stock_dic)
+        }
+
       },
 
       changePage:function (index) {
@@ -131,7 +178,8 @@
           endPosition = this.pageSize * index
         }
         this.tableData = this.allProductList.slice(startPosition, endPosition)
-      }
+      },
+
 
     }
 
