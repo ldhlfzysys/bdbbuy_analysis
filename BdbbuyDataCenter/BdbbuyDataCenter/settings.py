@@ -126,7 +126,7 @@ DATABASES = {
         'NAME': 'mobile',
         'USER': 'root',
         'PASSWORD': 'Bbdbuy@1100',
-        'HOST': 'bdbbuy-wai.mysql.rds.aliyuncs.com',
+        'HOST': 'mysql:dbname=mobile;host=bdbbuy-nei.mysql.rds.aliyuncs.com;port=3306;charset=utf8',
         'PORT': '3306',
     }
 }
