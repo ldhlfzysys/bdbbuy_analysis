@@ -19,16 +19,23 @@
         </Button>
         <small></small>
       </p>
-      <br>
-      <p style="margin-left: 0px;width: 360px">
+      <br/>
+      <p :hidden="pageType!='ordercount'" style="margin-left: 0px;width: 360px">
         <label style="text-align: left">(查找的数据包含：库存低于{{orderDay}}天销量的数据和总库存低于5的数据)</label>
       </p>
+      <!--<Button v-on:click="exportToExcel" style="float:right;margin-right: 10px" type="primary">-->
+        <!--导出到Excel-->
+      <!--</Button>-->
+      <Button v-on:click="printTable" style="float:right" type="primary">
+        打印所有数据
+      </Button>
+      <br>
 
 
     </div>
     <br>
 
-    <Table  border :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
+    <Table id="inventoryWarningTable"  border :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
     <div style="margin: 20px;overflow: hidden">
       <div style="float: right;">
         <Page ref="pages" :total="totalCount" :current="pageCurrent" @on-change="changePage"
@@ -117,13 +124,13 @@
           {
             title: 'id',
             key: 'product_id',
-            width: 100,
+            // width: 100,
             align: 'center',
           },
           {
             title: '中文名',
             key: 'name',
-            width: 200,
+            // width: 200,
             align: 'left',
           },
           {
@@ -133,8 +140,8 @@
             align: 'center',
           },
           {
-            title: '售价',
-            key: 'price',
+            title: '规格',
+            key: 'description',
             // width: 150,
             align: 'center',
           },
@@ -143,12 +150,14 @@
             key: 'quality_date',
             // width: 200,
             align: 'center',
+            sortable: true
           },
           {
             title: '库存数量',
             key: 'product_qty',
             // width: 100,
             align: 'center',
+            sortable: true
           },
         ]
         if (this.pageType == 'ordercount') {
@@ -157,6 +166,7 @@
             key: 'order_count',
             // width: 150,
             align: 'center',
+            sortable: true
           }
           this.tableColumns.push(order_count_dic)
           var delta_stock_dic =  {
@@ -164,6 +174,7 @@
             key: 'delta_count',
             // width: 100,
             align: 'center',
+            sortable: true
           }
           this.tableColumns.push(delta_stock_dic)
         }
@@ -180,6 +191,130 @@
         this.tableData = this.allProductList.slice(startPosition, endPosition)
       },
 
+      printTable:function () {
+        this.tableData = this.allProductList
+        var tableToPrint = this.preparePrintTable();//将要被打印的表格
+        var newWin= window.open("",'打印');//新打开一个空窗口
+        newWin.document.write('<html><head><title>库存预警商品清单</title>');
+        newWin.document.write('</head><body >');
+        newWin.document.write(tableToPrint);
+        newWin.document.write('</body></html>');
+        newWin.document.close();//在IE浏览器中使用必须添加这一句
+        newWin.focus();//在IE浏览器中使用必须添加这一句
+        setTimeout(()=> {     //延时
+          newWin.print();
+          newWin.close()
+        },1000);
+
+
+
+      },
+
+      preparePrintTable() {
+        //隐藏原表格
+        var record_num = 40;
+        var pages = Math.ceil(this.allProductList.length / record_num);
+        //满页数
+        var newTableDiv;
+        var html_tbl;
+        html_tbl = "";
+        var head_table_comp;
+        var tail_table_comp;
+        var newTable;
+        //获取原table的class和style属性
+        head_table_comp = document.getElementsByClassName("ivu-table-header").outerHTML;
+        tail_table_comp = document.getElementsByClassName("ivu-table-body").outerHTML;
+
+        var printTitle = document.createElement("h1");
+        printTitle.appendChild(document.createTextNode("库存预警清单"))
+        printTitle.setAttribute("style", "text-align: center")
+        html_tbl += printTitle.outerHTML;
+
+        var headerTable = document.createElement("table");
+        // headerTable.setAttribute("class", "print_table");
+        headerTable.setAttribute("cellspacing", "0");
+        headerTable.setAttribute("border", "1px solid");
+        headerTable.setAttribute("style", "margin-left: 5mm;width: 200mm;border-color: #515a6e;page-break-after:always");
+        var head_thead = document.createElement("thead");
+        var head_tr = document.createElement("tr");
+        var head_content = "";
+        // 设置打印表头
+        for(var i = 0; i < this.tableColumns.length; i++) {
+          var header_data = this.tableColumns[i];
+          var header_th = document.createElement("th");
+          var title_span = document.createElement("span");
+          var title = document.createTextNode(header_data["title"]);
+          title_span.appendChild(title);
+          header_th.appendChild(title_span);
+          head_content += header_th.outerHTML;
+        }
+        head_tr.innerHTML = head_content;
+        head_thead.appendChild(head_tr);
+        headerTable.appendChild(head_thead);
+        // html_tbl += headerTable.outerHTML;
+
+        // 设置table body部分
+
+        var tbody = document.createElement("tbody");
+        headerTable.appendChild(tbody);
+        for (var i = 0; i < pages; i++) {
+          var last_data = ((i + 1) * record_num) <  this.allProductList.length ? ((i + 1) * record_num) : this.allProductList.length;
+          for (var j = i * record_num;j < last_data ;j++) {
+            var record = this.allProductList[j];
+            var record_tr = document.createElement("tr")
+            record_tr.setAttribute("style", "text-align: center;word-break: break-all")
+            for(var k = 0; k < this.tableColumns.length; k++) {
+              var record_td = document.createElement("td")
+              var column_key = this.tableColumns[k]["key"];
+              var content_span = document.createElement("span")
+              content_span.setAttribute("style", "align: center")
+              content_span.appendChild(document.createTextNode(record[column_key]))
+              record_td.appendChild(content_span)
+              record_tr.appendChild(record_td)
+            }
+            tbody.appendChild(record_tr)
+
+          }
+        }
+
+        html_tbl += headerTable.outerHTML;
+
+
+        return html_tbl
+      },
+
+      createEmptyTr(idx) {
+        var emptyTr;
+        var emptyTd;
+        emptyTr = document.createElement("tr");
+        emptyTr.setAttribute("style","word-wrap:break-word;width: 10%;border-left-width:5px;text-align:center");
+        emptyTd = document.createElement("td");
+        emptyTd.setAttribute("style","word-wrap:break-word;width: 10%;border-left-width:5px;text-align:center");
+        emptyTd.innerHTML="  ";
+        var tra= emptyTd.outerHTML;
+
+        emptyTd = document.createElement("td");
+        emptyTd.setAttribute("style","text-align:center");
+        var trb= emptyTd.outerHTML;
+
+        emptyTd = document.createElement("td");
+        emptyTd.setAttribute("style","text-align:center");
+        var trc= emptyTd.outerHTML;
+
+        emptyTd = document.createElement("td");
+        emptyTd.setAttribute("style","text-align:center");
+        var trd= emptyTd.outerHTML;
+
+        emptyTd = document.createElement("td");
+        emptyTd.setAttribute("style","text-align:center");
+        var tre= emptyTd.outerHTML;
+        emptyTr.innerHTML=tra+trb+trc+trd+tre;
+        return emptyTr.outerHTML;
+      },
+
+      exportToExcel () {
+
+      },
 
     }
 
@@ -197,7 +332,6 @@
     margin-left: 0px;
   }
 
-
   input[type="text"] {
     height: 30px;
     line-height: 20px;
@@ -206,5 +340,8 @@
     vertical-align: middle;
     color: #666;
   }
+
+
+
 
 </style>
