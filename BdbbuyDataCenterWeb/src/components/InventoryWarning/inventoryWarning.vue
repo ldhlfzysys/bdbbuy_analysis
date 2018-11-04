@@ -204,7 +204,7 @@
         setTimeout(()=> {     //延时
           newWin.print();
           newWin.close()
-        },1000);
+        },500);
 
 
 
