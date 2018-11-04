@@ -2,8 +2,9 @@
   <div id="main" style="margin-left: 3%;margin-right: 3%;margin-top: 20px">
     <Row>
       <Col :xs="8" :sm="8" :md="8" :lg="8">
-        <h2 style="color: #363e4f;text-align: left">销售数据一览</h2>
+        <h2 style="color: #363e4f;text-align: left;">销售数据一览</h2>
       </Col>
+
       <el-date-picker
         v-model="dateValue"
         type="datetimerange"
@@ -11,30 +12,20 @@
         range-separator="To"
         start-placeholder="Start date"
         end-placeholder="End date"
-        style="float: right">
+        style="float: right;margin-right: 50px">
       </el-date-picker>
     </Row>
 
     <br>
-        <!--<el-tabs v-model="activeName" @tab-click="handleClick" type="border-card">-->
-            <!--<el-tab-pane name="first">-->
-                <!--<span slot="icon">-->
-                    <!--<el-card shadow="never" style="background-color: inherit">-->
-                      <!--从不显示-->
-                    <!--</el-card>-->
-                <!--</span>-->
-              <!--world-->
-            <!--</el-tab-pane>-->
-            <!--<el-tab-pane label="配置管理" name="second">-->
-                <!--<span slot="label">-->
-                    <!--<el-card shadow="never" style="margin:0 -20px -12px -20px;background-color: inherit">-->
-                      <!--从不显示-->
-                    <!--</el-card>-->
-                <!--</span>-->
-              <!--world-->
-            <!--</el-tab-pane>-->
-        <!--</el-tabs>-->
-    </div>
+    <Row>
+      <Tabs type="card">
+        <TabPane :label="saleCard" style="height: 800px">
+          销售数据内容
+        </TabPane>
+        <TabPane :label="saleCard">标签二的内容</TabPane>
+      </Tabs>
+
+    </Row>
 
   </div>
 </template>
@@ -47,6 +38,25 @@
         split1: 0.5,
         pickerOptions: '',
         dateValue: '',
+
+        saleCard: (h) => {
+        return h('div',
+          {style:{
+              width:'300px',
+              height:'200px',
+              backgroundColor:'transparent'}},
+          [
+            h('Card', {
+              props: {
+                title: "销售数据",
+                bordered: false,
+                padding: 0,
+                backgroundColor:'transparent'
+              }
+            })
+          ])
+        }
+
       }
     },
     mounted: function () {
@@ -62,6 +72,7 @@
       showOrderInfo:function () {
 
       },
+
       getMonthDays:function (month) {
         var date = new Date()
         var daysInMonth = new Array([0],[31],[28],[31],[30],[31],[30],[31],[31],[30],[31],[30],[31]);
@@ -80,6 +91,8 @@
         return past_days;
 
       },
+
+
       getShotcuts:function () {
         var self = this;
         this.pickerOptions = {
@@ -138,40 +151,28 @@
   }
 </script>
 
-<style scoped>
-  .demo-tabs-style1 > .ivu-tabs-card > .ivu-tabs-content {
-    height: 120px;
-    margin-top: -16px;
+<style>
+
+  .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab-active {
+    height: 200px;
   }
 
-  .demo-tabs-style1 > .ivu-tabs-card > .ivu-tabs-content > .ivu-tabs-tabpane {
-    background: #fff;
-    padding: 16px;
+  .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-nav-container  {
+    height: 200px;
   }
 
-  .demo-tabs-style1 > .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab {
-    border-color: transparent;
+  .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab {
+    height: 200px;
   }
 
-  .demo-tabs-style1 > .ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab-active {
-    border-color: #fff;
+  .ivu-card {
+    background: inherit;
   }
-  .demo-tabs-style2 > .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab{
-    border-radius: 0;
-    background: #fff;
+
+  .ivu-card-head {
+    border-bottom: 0px;
   }
-  .demo-tabs-style2 > .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab-active{
-    border-top: 1px solid #3399ff;
-  }
-  .demo-tabs-style2 > .ivu-tabs.ivu-tabs-card > .ivu-tabs-bar .ivu-tabs-tab-active:before{
-    content: '';
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: #3399ff;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
+
+
 
 </style>
