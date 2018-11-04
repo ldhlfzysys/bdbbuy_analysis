@@ -5,6 +5,10 @@
         <h2 style="color: #363e4f;text-align: left;">销售数据一览</h2>
       </Col>
 
+      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 10px">
+        <Option v-for="item in areaList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+      </Select>
+
       <el-date-picker
         v-model="dateValue"
         type="datetimerange"
@@ -16,6 +20,7 @@
       </el-date-picker>
     </Row>
 
+    <br>
     <br>
     <Row>
       <Tabs type="card">
@@ -31,6 +36,8 @@
 </template>
 
 <script>
+  import {serverBaseURL} from '../../globalConfig'
+
   export default {
     name: 'saleData',
     data () {
@@ -38,12 +45,18 @@
         split1: 0.5,
         pickerOptions: '',
         dateValue: '',
+        areaList: [{
+          'label': '全部地区',
+          'value': 'all'
+        }],
+
+        areaModel:"",
 
         saleCard: (h) => {
         return h('div',
           {style:{
               width:'300px',
-              height:'200px',
+              height:'180px',
               backgroundColor:'transparent'}},
           [
             h('Card', {
@@ -63,6 +76,7 @@
       // 页面加载
       console.log('这里是销售统计页面')
       // this.getData()
+      this.getAreaList()
       this.getShotcuts()
     },
     methods: {
@@ -70,6 +84,29 @@
         console.log('cccccc')
       },
       showOrderInfo:function () {
+
+      },
+
+      getAreaList:function () {
+        this.initAreaList()
+        let url = serverBaseURL + 'otherinfo/getAreaList'
+        this.$http.get(url).then(function (response) {
+          var status = response.status;
+          this.tableLoading = false
+          if (status == 200) {
+            var result = response.body;
+            var area_list = result['data']['area_list']
+            for (var i = 0;i < area_list.length;i++) {
+              var area = area_list[i]
+              var area_dic = {'label': area['name'],'value':area['id']}
+              this.areaList.push(area_dic)
+            }
+          }
+        }, function (response) {
+          console.log("发生错误")
+          var str = response.body.message
+          this.$Message.success(str)
+        });
 
       },
 
@@ -90,6 +127,13 @@
 
         return past_days;
 
+      },
+
+      initAreaList:function () {
+        this.areaList = [{
+          'label': '全部地区',
+          'value': 'all'
+        }]
       },
 
 
@@ -172,6 +216,7 @@
   .ivu-card-head {
     border-bottom: 0px;
   }
+
 
 
 
