@@ -3,8 +3,16 @@ from django.db import models
 
 #custom
 from Tools.model_util import CModel
-
+from enum import Enum
 # Create your models here.
+
+class OrderStatus(Enum):
+    OrderNotPay = '1'  # 未付款
+    OrderWaitDelivery = '2'  # 待发货
+    OrderDeliverying = '3'  # 配送中
+    OrderWaitComment = '4'  # 待评价
+    OrderRefunded = '7'  # 已退款
+
 
 class MgOrder(CModel):
     increment_id = models.CharField(max_length=30, blank=True, null=True)

@@ -20,10 +20,12 @@ from django.conf import settings
 
 from Order import urls as order_urls
 from Product import urls as product_urls
+from Other import urls as other_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('order/', include(order_urls)),
-    path('product/', include(product_urls))
+    path('product/', include(product_urls)),
+    path('otherinfo/', include(other_urls))
 ]
 

@@ -4,8 +4,7 @@
       <Col :xs="8" :sm="8" :md="8" :lg="8">
         <h2 style="color: #363e4f;text-align: left;">销售数据一览</h2>
       </Col>
-
-      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 10px">
+      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 20px" size="large">
         <Option v-for="item in areaList" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
 
@@ -16,6 +15,7 @@
         range-separator="To"
         start-placeholder="Start date"
         end-placeholder="End date"
+        default-time=""
         style="float: right;margin-right: 50px">
       </el-date-picker>
     </Row>
@@ -25,9 +25,9 @@
     <Row>
       <Tabs type="card">
         <TabPane :label="saleCard" style="height: 800px">
-          销售数据内容
+          <div id="saleInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
-        <TabPane :label="saleCard">标签二的内容</TabPane>
+        <TabPane :label="orderCard">标签二的内容</TabPane>
       </Tabs>
 
     </Row>
@@ -37,6 +37,9 @@
 
 <script>
   import {serverBaseURL} from '../../globalConfig'
+  import {formatDate }from '../CommonTool/commonMethod'
+  import echarts from 'echarts'
+  import {chartTimeStatistic} from './chartInfo'
 
   export default {
     name: 'saleData',
@@ -49,6 +52,8 @@
           'label': '全部地区',
           'value': 'all'
         }],
+        orderData:{},
+        chartDic: {},
 
         areaModel:"",
 
@@ -56,18 +61,18 @@
         return h('div',
           {style:{
               width:'300px',
-              height:'180px',
+              height:'150px',
               backgroundColor:'transparent'}},
-          [
-            h('Card', {
-              props: {
-                title: "销售数据",
-                bordered: false,
-                padding: 0,
-                backgroundColor:'transparent'
-              }
-            })
-          ])
+        )
+        },
+
+        orderCard: (h) => {
+          return h('div',
+            {style:{
+                width:'300px',
+                height:'150px',
+                backgroundColor:'transparent'}},
+            )
         }
 
       }
@@ -75,15 +80,149 @@
     mounted: function () {
       // 页面加载
       console.log('这里是销售统计页面')
-      // this.getData()
+      const end = new Date();
+      const start = new Date();
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
+      this.dateValue = [start, end]
+      this.areaModel = ['all']
       this.getAreaList()
       this.getShotcuts()
+
+      this.getData()
     },
     methods: {
-      showSaleMoney:function () {
-        console.log('cccccc')
+
+      getData:function () {
+        var self = this
+        this.initChart()
+        let url = serverBaseURL + 'order/getOrderList?fromDate='
+          + this.customFormatDate(this.dateValue[0]) + '&toDate='+ this.customFormatDate(this.dateValue[1]) + '&areaId=' + this.areaModel.join('-')
+        this.$http.get(url).then(function (response) {
+          var status = response.status;
+          if (status == 200) {
+            var result = response.body;
+            self.orderData = result['data']
+            self.updateSaleData()
+            self.updateOrderData()
+            self.chartSaleData()
+
+          }
+        }, function (response) {
+          console.log("发生错误")
+          var str = response.body.message
+          self.$Message.success(str)
+        });
       },
-      showOrderInfo:function () {
+
+      updateSaleData:function () {
+        var self = this
+        this.saleCard = function (h) {
+          var sale_total = self.orderData['sale_total']
+          var validate_order_list = self.orderData['validate_order_list']
+          var tax_total = self.orderData['tax_total']
+          return h('div',
+            {style:{
+                width:'300px',
+                height:'120px',
+                textAlign: 'left',
+                backgroundColor:'transparent'}},
+            [
+              h('br'),
+              h('h2', {}, '销售总额：$' + sale_total + ' CAD'),
+              h('h4', {}, '有效订单数：' + validate_order_list.length),
+              h('h4', {}, '平均订单金额：$' + (sale_total / validate_order_list.length).toFixed(2) + ' CAD'),
+              h('h4', {}, '税费：$' + tax_total + ' CAD'),
+            ])
+        }
+
+      },
+
+      initChart:function () {
+        var self = this
+        var elementIdList = ['saleInfo']
+        elementIdList.forEach(function (elID) {
+          var elementId = document.getElementById(elID)
+          echarts.dispose(elementId)
+          var chart = echarts.init(elementId);
+          self.chartDic[elID] = chart
+          chart.showLoading({
+            text: '数据获取中',
+            effect: 'whirling'
+          })
+        })
+      },
+
+      chartSaleData:function () {
+        var self = this
+        let chart = this.chartDic['saleInfo']
+        chart.hideLoading()
+
+        var dataDic = {}
+        var dataList = []
+        this.orderData['validate_order_list'].forEach(function (order) {
+          var dic = {'value': [order['create_at'], order['total']]}
+          dataList.push(dic)
+        })
+        var serie_dic = {
+          'name':'销售额',
+          'type':'line',
+          'itemStyle':{
+            'normal':{
+              'color': '#63a2c3'
+            }
+          },
+          'data': dataList,
+          'markPoint' : {
+            'data' : [
+              {'type' : 'max', 'name': '最大值'},
+              {'type' : 'min', 'name': '最小值'}
+            ]
+          },
+          'markLine': {
+            'data' : [
+              {'type' : 'average', 'name': '平均销售额'}
+            ],
+            'itemStyle': {
+              'normal': {
+                'label': {show: true,
+                  'formatter': function(params) {
+                    return '平均:$' + params.value + '(CAD)'
+                  }},
+
+              }
+            },
+          }
+        }
+
+        dataDic['title'] = '总销售额'
+        dataDic['subtitle'] = ''
+        dataDic['yUnit'] = 'CAD'
+        dataDic['series'] = [serie_dic]
+        dataDic['minValue'] = this.customFormatDate(this.dateValue[0])
+        dataDic['maxValue'] = this.customFormatDate(this.dateValue[1])
+
+        chart.setOption(chartTimeStatistic(dataDic));
+      },
+
+      updateOrderData:function () {
+        var self = this
+        this.orderCard = function (h) {
+          var order_total = self.orderData['all_order_list'].length
+          var validate_order_list = self.orderData['validate_order_list']
+          return h('div',
+            {style:{
+                width:'300px',
+                height:'150px',
+                textAlign: 'left',
+                backgroundColor:'transparent'}},
+            [
+              h('br'),
+              h('h2', {}, '全部订单数：' + order_total),
+              h('h4', {}, '有效订单数：' + validate_order_list.length),
+              h('h4', {}, '退款订单数：' + self.orderData['refund_order']),
+              h('br'),
+            ])
+        }
 
       },
 
@@ -134,6 +273,11 @@
           'label': '全部地区',
           'value': 'all'
         }]
+      },
+
+      customFormatDate:function (date) {
+        let format = 'yyyy-MM-dd hh:mm:ss'
+        return formatDate(date, format)
       },
 
 
@@ -198,15 +342,15 @@
 <style>
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab-active {
-    height: 200px;
+    height: 150px;
   }
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-nav-container  {
-    height: 200px;
+    height: 150px;
   }
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab {
-    height: 200px;
+    height: 150px;
   }
 
   .ivu-card {
