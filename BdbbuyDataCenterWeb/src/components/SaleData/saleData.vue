@@ -4,7 +4,7 @@
       <Col :xs="8" :sm="8" :md="8" :lg="8">
         <h2 style="color: #363e4f;text-align: left;">销售数据一览</h2>
       </Col>
-      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 20px" size="large">
+      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 20px" size="large" @on-change="getData">
         <Option v-for="item in areaList" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
 
@@ -15,7 +15,7 @@
         range-separator="To"
         start-placeholder="Start date"
         end-placeholder="End date"
-        default-time=""
+        v-on:change="getData"
         style="float: right;margin-right: 50px">
       </el-date-picker>
     </Row>
@@ -27,7 +27,10 @@
         <TabPane :label="saleCard" style="height: 800px">
           <div id="saleInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
-        <TabPane :label="orderCard">标签二的内容</TabPane>
+        <TabPane :label="orderCard">暂无</TabPane>
+        <TabPane :label="areaOrderCard">
+          <div id="areaInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
+        </TabPane>
       </Tabs>
 
     </Row>
@@ -39,7 +42,7 @@
   import {serverBaseURL} from '../../globalConfig'
   import {formatDate }from '../CommonTool/commonMethod'
   import echarts from 'echarts'
-  import {chartTimeStatistic} from './chartInfo'
+  import {chartTimeStatistic, chartAreaStatistic} from './chartInfo'
 
   export default {
     name: 'saleData',
@@ -73,7 +76,16 @@
                 height:'150px',
                 backgroundColor:'transparent'}},
             )
-        }
+        },
+
+        areaOrderCard: (h) => {
+          return h('div',
+            {style:{
+                width:'300px',
+                height:'150px',
+                backgroundColor:'transparent'}},
+          )
+        },
 
       }
     },
@@ -87,7 +99,6 @@
       this.areaModel = ['all']
       this.getAreaList()
       this.getShotcuts()
-
       this.getData()
     },
     methods: {
@@ -102,9 +113,13 @@
           if (status == 200) {
             var result = response.body;
             self.orderData = result['data']
+            console.log('gggggg')
+            console.log(self.orderData)
             self.updateSaleData()
             self.updateOrderData()
             self.chartSaleData()
+            self.updateAreaOrderData()
+            self.chartAreaOrderData()
 
           }
         }, function (response) {
@@ -128,10 +143,10 @@
                 backgroundColor:'transparent'}},
             [
               h('br'),
-              h('h2', {}, '销售总额：$' + sale_total + ' CAD'),
+              h('h2', {}, '销售总额：$' + sale_total.toFixed(2)  + ' CAD'),
               h('h4', {}, '有效订单数：' + validate_order_list.length),
               h('h4', {}, '平均订单金额：$' + (sale_total / validate_order_list.length).toFixed(2) + ' CAD'),
-              h('h4', {}, '税费：$' + tax_total + ' CAD'),
+              h('h4', {}, '税费：$' + tax_total.toFixed(2)  + ' CAD'),
             ])
         }
 
@@ -139,7 +154,7 @@
 
       initChart:function () {
         var self = this
-        var elementIdList = ['saleInfo']
+        var elementIdList = ['saleInfo', 'areaInfo']
         elementIdList.forEach(function (elID) {
           var elementId = document.getElementById(elID)
           echarts.dispose(elementId)
@@ -220,7 +235,7 @@
               h('h2', {}, '全部订单数：' + order_total),
               h('h4', {}, '有效订单数：' + validate_order_list.length),
               h('h4', {}, '退款订单数：' + self.orderData['refund_order']),
-              h('br'),
+              h('h4', {}, '订单增长率：' + self.orderData['order_rate'].toFixed(2) + '%'),
             ])
         }
 
@@ -246,6 +261,66 @@
           var str = response.body.message
           this.$Message.success(str)
         });
+
+      },
+
+      updateAreaOrderData:function () {
+        var self = this
+        this.areaOrderCard = function (h) {
+
+          return h('div',
+            {style:{
+                width:'300px',
+                height:'150px',
+                textAlign: 'left',
+                backgroundColor:'transparent'}},
+            [
+              h('br'),
+              h('h2', {}, '区域销售额统计'),
+              h('br'),
+              h('br'),
+              h('br'),
+            ])
+        }
+      },
+      chartAreaOrderData:function () {
+        let chart = this.chartDic['areaInfo']
+        chart.hideLoading()
+
+        var dataDic = {}
+        var dataList = []
+
+        var area_order_info = this.orderData['area_info']['area_order_info']
+        var min = -100
+        var max = -100
+
+        for (var key in area_order_info) {
+          var value = area_order_info[key]
+          if (min == -100) {
+            min = value[0]
+          }
+
+          if (max == -100) {
+            max = value[0]
+          }
+
+          if (value[0] > max) {
+            max = value[0]
+          }
+
+          if (value[0] < max) {
+            min = value[0]
+          }
+          var dic = {'name':value[1], 'value': value[0].toFixed(2)}
+          dataList.push(dic)
+        }
+
+        dataDic['title'] = '区域销售额统计'
+        dataDic['data'] = dataList
+        dataDic['min'] = min
+        dataDic['max'] = max
+        chart.setOption(chartAreaStatistic(dataDic))
+
 
       },
 

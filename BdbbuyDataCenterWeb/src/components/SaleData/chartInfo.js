@@ -64,3 +64,77 @@ export var chartTimeStatistic = function (dataDic) {
   return option;
 
 }
+
+export var chartAreaStatistic = function (dataDic) {
+
+  var option = {
+    title: {
+      text: dataDic.title,
+      left: 'center',
+      top: 20,
+      textStyle: {
+        color: '#000'
+      }
+    },
+
+    tooltip : {
+      trigger: 'item',
+      formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+
+    visualMap: {
+      show: false,
+      min: dataDic.min,
+      max: dataDic.max,
+      inRange: {
+        colorLightness: [0, 0.6]
+      }
+    },
+    series : [
+      {
+        name:'区域数据',
+        type:'pie',
+        radius : '70%',
+        center: ['50%', '50%'],
+        data:dataDic.data.sort(function (a, b) { return a.value - b.value; }),
+        roseType: 'radius',
+        label: {
+          normal: {
+            textStyle: {
+              color: 'rgba(0, 0, 0, 1)',
+              formatter: "{a} <br/>{b} : {c} ({d}%)"
+            }
+          }
+        },
+        labelLine: {
+          normal: {
+            lineStyle: {
+              color: 'rgba(0, 0, 0, 1)',
+              formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            smooth: 0.2,
+            length: 10,
+            length2: 20
+          }
+        },
+        itemStyle: {
+          normal: {
+            color: '#c23531',
+            shadowBlur: 5000,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDelay: function (idx) {
+          return Math.random() * 200;
+        }
+      }
+    ]
+  };
+  return option;
+
+}
+
+
