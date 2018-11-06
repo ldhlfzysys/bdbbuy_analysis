@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'z8=#4(^8*mpc3w7)lw%23h(nb-2=z4rz-ozk#-8w!@bjk=2p4x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -126,7 +126,7 @@ DATABASES = {
         'NAME': 'mobile',
         'USER': 'root',
         'PASSWORD': 'Bbdbuy@1100',
-        'HOST': 'bdbbuy-wai.mysql.rds.aliyuncs.com',
+        'HOST': 'bdbbuy-nei.mysql.rds.aliyuncs.com',
         'PORT': '3306',
     }
 }
@@ -156,7 +156,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-USE_TZ = False
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
