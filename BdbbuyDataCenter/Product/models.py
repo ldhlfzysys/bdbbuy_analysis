@@ -6,8 +6,9 @@ from enum import Enum
 # custom
 from Tools.model_util import CModel
 from datetime import datetime, timedelta
+from django.utils import timezone
 from Order.views import Orders
-
+from Tools.time_util import *
 import json
 
 # Create your models here.
@@ -98,12 +99,12 @@ class Product(CModel):
             # 按照过去一段时间销量查找库存较少数据
             product_list = Product.objects.filter(status=ProductStatus.ProductOnsale.value)
             date_now = datetime.now().replace(hour=0, minute=0, second=0)
-            from_date = (date_now - timedelta(days=int(order_day))).strftime("%Y-%m-%d %H:%M:%S")
-            to_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            order_list = Orders.objects.filter(create_at__gte=from_date, create_at__lte=to_date)
+            from_date = (date_now - timedelta(days=int(order_day))).replace(tzinfo=timezone.utc)
+            to_date = datetime.now().replace(tzinfo=timezone.utc)
+            order_list = Orders.objects.filter(create_at__range=(from_date, to_date)).values('product_desc')
             order_dict = {}
-            for order in order_list:
-                for order_product in json.loads(order.product_desc):
+            for order in order_list.iterator():
+                for order_product in json.loads(order['product_desc']):
                     product_id = str(order_product['product_id'])
                     product_count = int(order_product['product_count'])
                     if order_dict.get(product_id, None):

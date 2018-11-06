@@ -4,6 +4,7 @@
 
 ## Build generated
 DerivedData/
+*.pyc
 
 ## Various settings
 *.pbxuser
