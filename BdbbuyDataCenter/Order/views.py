@@ -67,8 +67,7 @@ def get_order_list(request):
             # order_serializable = order.serializable_values()
             # 当前需要统计的订单
             all_area_order_list.append(order)
-
-            if areas.find('all') != -1 or order.area_id in areas.split('-'):
+            if areas.find('all') != -1 or str(order['area_id']) in areas.split('-'):
                 all_order_list.append(order)
                 if order['status'] == OrderStatus.OrderRefunded.value:
                     refund_order += 1
