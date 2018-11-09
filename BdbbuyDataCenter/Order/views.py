@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 
 import json
+from functools import reduce
 from datetime import datetime,timedelta
 from django.utils import timezone
 from Tools.time_util import *
@@ -14,7 +15,7 @@ from django.db.models import Q
 
 # custom
 from .models import *
-from Other.models import Area
+from Other.models import Area, Refunds
 
 
 
@@ -32,13 +33,15 @@ def get_order_list(request):
     dt = timestamp_datetime(last_timestamp).replace(tzinfo=timezone.utc)
 
     search_to_datetime = timestamp_datetime(timestamp2).replace(tzinfo=timezone.utc)
+    search_from_datetime = timestamp_datetime(timestamp1).replace(tzinfo=timezone.utc)
 
     areas = request.GET.get('areaId', '')
     if areas == '':
         areas = 'all'
 
     all_order_q = Orders.objects.filter(Q(create_at__range=(dt, search_to_datetime)),
-                                        ~Q(status=OrderStatus.OrderNotPay.value))\
+                                        ~Q(status__in=[OrderStatus.OrderNotPay.value, OrderStatus.OrderDelete.value,
+                                                       OrderStatus.OrderTimeout.value, OrderStatus.OrderRefunded.value]))\
         .values('order_id', 'area_id', 'create_at', 'status', 'tax_total', 'total')\
         .order_by('create_at')
 
@@ -50,6 +53,26 @@ def get_order_list(request):
     tax_total = 0
     refund_order = 0
     all_area_order_list = []
+
+    all_order_id = [order['order_id'] for order in all_order_q.iterator()
+                    if datetime_timestamp(order['create_at'], 's') >= timestamp1
+                    and (areas.find('all') != -1 or str(order['area_id']) in areas.split('-'))]
+
+    print(all_order_id)
+    refund_list = Refunds.objects.filter(order_id__in=all_order_id, create_at__range=(search_from_datetime, search_to_datetime, )).values('refund', 'order_id', 'create_at')\
+        .order_by('create_at')
+
+    for refund in refund_list:
+        print(refund['order_id'])
+        print(refund['refund'])
+        print(refund['create_at'])
+
+    all_refund_list = [refund['refund'] / 100.0 for refund in refund_list.iterator()]
+    print('ghhjjjjj')
+    print(all_refund_list)
+    refund_order = len(all_refund_list)
+    refund_total = sum(all_refund_list)
+    print(refund_total)
 
     for order in all_order_q.iterator():
         # 统计地区销售数据
@@ -64,17 +87,13 @@ def get_order_list(request):
             area_order_info[order['area_id']] = (last_sale + float(order['total']), area_order_info[order['area_id']][1])
 
         if datetime_timestamp(order['create_at'], 's') >= timestamp1:
-            # order_serializable = order.serializable_values()
             # 当前需要统计的订单
             all_area_order_list.append(order)
             if areas.find('all') != -1 or str(order['area_id']) in areas.split('-'):
                 all_order_list.append(order)
-                if order['status'] == OrderStatus.OrderRefunded.value:
-                    refund_order += 1
-                else:
-                    sale_total += float(order['total'])
-                    tax_total += float(order['tax_total'])
-                    validate_order_list.append(order)
+                sale_total += float(order['total'])
+                tax_total += float(order['tax_total'])
+                validate_order_list.append(order)
         else:
             # 前一个时期的订单
             if areas.find('all') != -1 or order['area_id'] in areas.split('-'):
@@ -86,11 +105,18 @@ def get_order_list(request):
     diversion = last_validate_order_count
     if diversion == 0:
         diversion = 1
-    order_rate = ((len(validate_order_list) - last_validate_order_count) / diversion) * 100
+    rate = [100, 1][diversion == 1]
+    order_rate = ((len(validate_order_list) - last_validate_order_count) / diversion) * rate
+    print(sale_total)
+    order_total = sale_total
+    sale_total -= refund_total
+    sale_total -= tax_total
 
-    return JsonResponse({'data': {'all_order_list': all_order_list, 'sale_total': sale_total,
-                                  'validate_order_list':validate_order_list, 'tax_total': tax_total,
-                                  'refund_order': refund_order, 'area_info': area_info, 'order_rate': order_rate}})
+    return JsonResponse(dict(data={'all_order_list': all_order_list, 'sale_total': sale_total,
+                                   'validate_order_list': validate_order_list, 'tax_total': tax_total,
+                                   'refund_order': refund_order, 'area_info': area_info, 'order_rate': order_rate,
+                                   'order_total': order_total, 'refund_total': refund_total},
+                             ))
 
 
 

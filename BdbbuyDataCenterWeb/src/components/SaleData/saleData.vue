@@ -64,7 +64,7 @@
         return h('div',
           {style:{
               width:'300px',
-              height:'150px',
+              height:'180px',
               backgroundColor:'transparent'}},
         )
         },
@@ -73,7 +73,7 @@
           return h('div',
             {style:{
                 width:'300px',
-                height:'150px',
+                height:'180px',
                 backgroundColor:'transparent'}},
             )
         },
@@ -82,7 +82,7 @@
           return h('div',
             {style:{
                 width:'300px',
-                height:'150px',
+                height:'180px',
                 backgroundColor:'transparent'}},
           )
         },
@@ -99,7 +99,7 @@
       this.areaModel = ['all']
       this.getAreaList()
       this.getShotcuts()
-      this.getData()
+      // this.getData()
     },
     methods: {
 
@@ -135,18 +135,22 @@
           var sale_total = self.orderData['sale_total']
           var validate_order_list = self.orderData['validate_order_list']
           var tax_total = self.orderData['tax_total']
+          var refund_total = self.orderData['refund_total']
+          var order_total = self.orderData['order_total']
           return h('div',
             {style:{
                 width:'300px',
-                height:'120px',
+                height:'180px',
                 textAlign: 'left',
                 backgroundColor:'transparent'}},
             [
               h('br'),
               h('h2', {}, '销售总额：$' + sale_total.toFixed(2)  + ' CAD'),
+              h('h4', {}, '订单总额：$' + order_total.toFixed(2)  + ' CAD'),
+              h('h4', {}, '税费：$' + tax_total.toFixed(2)  + ' CAD'),
+              h('h4', {}, '退款：$' + refund_total.toFixed(2)  + ' CAD'),
               h('h4', {}, '有效订单数：' + validate_order_list.length),
               h('h4', {}, '平均订单金额：$' + (sale_total / validate_order_list.length).toFixed(2) + ' CAD'),
-              h('h4', {}, '税费：$' + tax_total.toFixed(2)  + ' CAD'),
             ])
         }
 
@@ -227,7 +231,7 @@
           return h('div',
             {style:{
                 width:'300px',
-                height:'150px',
+                height:'180px',
                 textAlign: 'left',
                 backgroundColor:'transparent'}},
             [
@@ -236,6 +240,8 @@
               h('h4', {}, '有效订单数：' + validate_order_list.length),
               h('h4', {}, '退款订单数：' + self.orderData['refund_order']),
               h('h4', {}, '订单增长率：' + self.orderData['order_rate'].toFixed(2) + '%'),
+              h('br'),
+              h('br'),
             ])
         }
 
@@ -277,6 +283,8 @@
             [
               h('br'),
               h('h2', {}, '区域销售额统计'),
+              h('br'),
+              h('br'),
               h('br'),
               h('br'),
               h('br'),
@@ -417,15 +425,15 @@
 <style>
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab-active {
-    height: 150px;
+    height: 180px;
   }
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-nav-container  {
-    height: 150px;
+    height: 180px;
   }
 
   .ivu-tabs.ivu-tabs-card>.ivu-tabs-bar .ivu-tabs-tab {
-    height: 150px;
+    height: 180px;
   }
 
   .ivu-card {

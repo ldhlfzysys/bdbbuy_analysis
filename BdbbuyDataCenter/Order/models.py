@@ -11,6 +11,8 @@ class OrderStatus(Enum):
     OrderWaitDelivery = '2'  # 待发货
     OrderDeliverying = '3'  # 配送中
     OrderWaitComment = '4'  # 待评价
+    OrderDelete = '5'  # 删除
+    OrderTimeout = '6'  # 超时
     OrderRefunded = '7'  # 已退款
 
 
