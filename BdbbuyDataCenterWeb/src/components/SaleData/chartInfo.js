@@ -22,18 +22,20 @@ export var chartTimeStatistic = function (dataDic) {
       }
     },
     xAxis: {
-      type: 'time',
+      type: dataDic.xAxisType,
       splitNumber: 20,
       axisLine: {
         onZero: false,
       },
       min: dataDic.minValue,
-      max: dataDic.maxValue
+      max: dataDic.maxValue,
+      data: dataDic.xAxisData
 
     },
     yAxis: {
       type: 'value',
       name: dataDic.yUnit,
+      minInterval : 1,
 
     },
     title: [{

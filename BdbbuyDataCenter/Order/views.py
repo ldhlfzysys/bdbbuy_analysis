@@ -68,8 +68,6 @@ def get_order_list(request):
         print(refund['create_at'])
 
     all_refund_list = [refund['refund'] / 100.0 for refund in refund_list.iterator()]
-    print('ghhjjjjj')
-    print(all_refund_list)
     refund_order = len(all_refund_list)
     refund_total = sum(all_refund_list)
     print(refund_total)

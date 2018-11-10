@@ -27,7 +27,9 @@
         <TabPane :label="saleCard" style="height: 800px">
           <div id="saleInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
-        <TabPane :label="orderCard">暂无</TabPane>
+        <TabPane :label="orderCard">
+          <div id="orderInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
+        </TabPane>
         <TabPane :label="areaOrderCard">
           <div id="areaInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
@@ -40,7 +42,7 @@
 
 <script>
   import {serverBaseURL} from '../../globalConfig'
-  import {formatDate }from '../CommonTool/commonMethod'
+  import {formatDate, customDateParse, range}from '../CommonTool/commonMethod'
   import echarts from 'echarts'
   import {chartTimeStatistic, chartAreaStatistic} from './chartInfo'
 
@@ -120,6 +122,7 @@
             self.chartSaleData()
             self.updateAreaOrderData()
             self.chartAreaOrderData()
+            self.chartOrderData()
 
           }
         }, function (response) {
@@ -158,7 +161,7 @@
 
       initChart:function () {
         var self = this
-        var elementIdList = ['saleInfo', 'areaInfo']
+        var elementIdList = ['saleInfo', 'orderInfo','areaInfo']
         elementIdList.forEach(function (elID) {
           var elementId = document.getElementById(elID)
           echarts.dispose(elementId)
@@ -217,10 +220,94 @@
         dataDic['subtitle'] = ''
         dataDic['yUnit'] = 'CAD'
         dataDic['series'] = [serie_dic]
+        dataDic['xAxisType'] = 'time'
         dataDic['minValue'] = this.customFormatDate(this.dateValue[0])
         dataDic['maxValue'] = this.customFormatDate(this.dateValue[1])
 
         chart.setOption(chartTimeStatistic(dataDic));
+      },
+
+      chartOrderData:function () {
+        var self = this
+        let chart = this.chartDic['orderInfo']
+        chart.hideLoading()
+
+        var dataDic = {}
+        var dataList = []
+        var hourOrderDic = {}
+
+        for (var hour in range(0, 23)) {
+          hourOrderDic[hour] = 0
+        }
+
+        this.orderData['validate_order_list'].forEach(function (order) {
+          var hour = customDateParse(order['create_at']).getHours()
+          if (hourOrderDic.hasOwnProperty(hour)) {
+            hourOrderDic[hour] = hourOrderDic[hour] + 1
+          } else {
+            hourOrderDic[hour] = 1
+          }
+
+        })
+
+        var xAxisData = []
+
+        for (var key in hourOrderDic) {
+          var order_count = hourOrderDic[key]
+          var key_str = key + '时'
+          var dic = {'value': [key_str, order_count]}
+          dataList.push(order_count)
+          xAxisData.push(key_str)
+        }
+
+        console.log('uuuuuuuiii')
+        console.log(dataList)
+        console.log(xAxisData)
+        var serie_dic = {
+          'name':'各时段订单数统计',
+          'type':'bar',
+          'itemStyle':{
+            'normal':{
+              'color': '#63a2c3'
+            }
+          },
+          'label': {
+            'normal': {
+              'color': '#ffffff',
+              'show': true,
+              'formatter': function (params) {
+                if (params.value > 0) {
+                  return params.value;
+                } else {
+                  return '';
+                }
+              }
+            }
+          },
+          'data': dataList,
+          'markLine': {
+            'data' : [
+              {'type' : 'average', 'name': '平均订单数'}
+            ],
+            'itemStyle': {
+              'normal': {
+                'label': {show: true,
+                  'formatter': function(params) {
+                    return '平均:$' + params.value + '(单)'
+                  }},
+
+              }
+            },
+          }
+        }
+
+        dataDic['title'] = '各时段订单数统计'
+        dataDic['subtitle'] = ''
+        dataDic['series'] = [serie_dic]
+        dataDic['xAxisType'] = 'category'
+        dataDic['xAxisData'] = xAxisData
+        chart.setOption(chartTimeStatistic(dataDic));
+
       },
 
       updateOrderData:function () {
