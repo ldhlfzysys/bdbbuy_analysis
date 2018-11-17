@@ -41,7 +41,7 @@ def get_order_list(request):
 
     all_order_q = Orders.objects.filter(Q(create_at__range=(dt, search_to_datetime)),
                                         ~Q(status__in=[OrderStatus.OrderNotPay.value, OrderStatus.OrderDelete.value,
-                                                       OrderStatus.OrderTimeout.value, OrderStatus.OrderRefunded.value]))\
+                                                       OrderStatus.OrderTimeout.value]))\
         .values('order_id', 'area_id', 'create_at', 'status', 'tax_total', 'total')\
         .order_by('create_at')
 
@@ -53,19 +53,8 @@ def get_order_list(request):
     tax_total = 0
     refund_order = 0
     all_area_order_list = []
-
-    all_order_id = [order['order_id'] for order in all_order_q.iterator()
-                    if datetime_timestamp(order['create_at'], 's') >= timestamp1
-                    and (areas.find('all') != -1 or str(order['area_id']) in areas.split('-'))]
-
-    print(all_order_id)
-    refund_list = Refunds.objects.filter(order_id__in=all_order_id, create_at__range=(search_from_datetime, search_to_datetime, )).values('refund', 'order_id', 'create_at')\
+    refund_list = Refunds.objects.filter(create_at__range=(search_from_datetime, search_to_datetime)).values('refund', 'order_id', 'create_at')\
         .order_by('create_at')
-
-    for refund in refund_list:
-        print(refund['order_id'])
-        print(refund['refund'])
-        print(refund['create_at'])
 
     all_refund_list = [refund['refund'] / 100.0 for refund in refund_list.iterator()]
     refund_order = len(all_refund_list)
