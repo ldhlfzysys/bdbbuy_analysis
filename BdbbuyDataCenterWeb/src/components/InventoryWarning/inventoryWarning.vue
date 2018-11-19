@@ -23,12 +23,14 @@
       <p :hidden="pageType!='ordercount'" style="margin-left: 0px;width: 360px">
         <label style="text-align: left">(查找的数据包含：库存低于{{orderDay}}天销量的数据和总库存低于5的数据)</label>
       </p>
-      <!--<Button v-on:click="exportToExcel" style="float:right;margin-right: 10px" type="primary">-->
-        <!--导出到Excel-->
-      <!--</Button>-->
-      <Button v-on:click="printTable" style="float:right" type="primary">
+
+      <Button v-on:click="printTable" style="float:right;margin-right: 30px" type="primary">
         打印所有数据
       </Button>
+      <Button v-on:click="exportToExcel" style="float:right;margin-right: 10px;" type="primary">
+          导出到Excel
+      </Button>
+
       <br>
 
 
@@ -49,6 +51,26 @@
 
 <script>
   import {serverBaseURL} from '../../globalConfig'
+  import FileSaver from 'file-saver'
+  import XLSX from 'xlsx'
+  import XLSX_SAVE from  'file-saver'
+  import {isString}from '../CommonTool/commonMethod'
+
+  const borderAll = {  //单元格外侧框线
+    top: {
+      style: 'thin'
+    },
+    bottom: {
+      style: 'thin'
+    },
+    left: {
+      style: 'thin'
+    },
+    right: {
+      style: 'thin'
+    }
+  };
+
 
   export default {
     name: 'inventoryWarning',
@@ -327,10 +349,72 @@
       },
 
       exportToExcel () {
+        /* generate workbook object from table */
+        // var wb = XLSX.utils.table_to_book(document.querySelector('#inventoryWarningTable'))
+        var wb = XLSX.utils.book_new();
+        var json_data = []
+        var header_keys = []
+        var header_titles = []
 
+        for (var i = 0; i < this.tableColumns.length; i++) {
+          var column = this.tableColumns[i];
+          header_keys.push(column['key'])
+          header_titles.push(column['title'])
+        }
+
+
+        for (var i = 0;i < this.allProductList.length;i++) {
+          var record = this.allProductList[i];
+
+          var dic = {};
+          for (var j = 0;j < header_keys.length;j++) {
+            if (j == 0) {
+              dic['序号'] = i + 1
+            }
+            var header_key = header_keys[j]
+            var header_title = header_titles[j]
+            var data = record[header_key]
+            dic[header_title] = data;
+          }
+          json_data.push(dic)
+        }
+
+
+        var ws = XLSX.utils.json_to_sheet(json_data);
+        /* get binary string as output */
+
+        console.log(ws)
+        for (var key in ws) {
+          var cell = ws[key]
+          if (!isString(cell)) {
+            try {
+              cell['s'] = {border: borderAll}
+            } catch (e) {
+              console.log(e)
+            }
+
+          }
+
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        var wbout = XLSX.write(wb, {type: "binary", bookType: "xlsx"});
+
+        try {
+          XLSX_SAVE.saveAs(new Blob([this.s2ab(wbout)], {type: "application/octet-stream"}), "库存预警数据.xlsx");
+        } catch (e) { if (typeof console !== 'undefined') console.log(e, wbout) }
+        return wbout
       },
 
-    }
+       s2ab:function(s) {
+         const buf = new ArrayBuffer(s.length);
+         const view = new Uint8Array(buf);
+         for (let i = 0; i !== s.length; ++i) {
+           view[i] = s.charCodeAt(i) & 0xFF;
+         }
+         return buf;
+       }
+  }
 
   }
 </script>
