@@ -38,8 +38,9 @@
     <Table id="inventoryWarningTable"  border :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
     <div style="margin: 20px;overflow: hidden">
       <div style="float: right;">
-        <Page ref="pages" :total="totalCount" :current="pageCurrent" @on-change="changePage"
-              :page-size="pageSize" show-sizer :page-size-opts="page_size_opts" show-total></Page>
+        <Page ref="pages" :total="totalCount" :current="pageCurrent"
+              :page-size="pageSize" show-sizer :page-size-opts="page_size_opts"
+              show-total @on-page-size-change="changePageSize" @on-change="changePage"></Page>
       </div>
     </div>
 
@@ -109,6 +110,7 @@
             var result = response.body;
             this.allProductList = result['data']['order_list']
             this.totalCount = result['data']['totalCount']
+            console.log('uuuuuuu')
             this.changePage(1)
           }
         }, function (response) {
@@ -189,6 +191,18 @@
           endPosition = this.pageSize * index
         }
         this.tableData = this.allProductList.slice(startPosition, endPosition)
+      },
+
+      changePageSize:function (size) {
+        var startPosition = 0
+        var originSize = this.pageSize
+        this.pageSize = size
+        var endPosition = this.allProductList.length
+        if (this.allProductList.length > this.pageSize) {
+          var originStartPosition = originSize * (this.pageCurrent)
+          var page = Math.floor(originStartPosition / size) + 1
+          this.changePage(page)
+        }
       },
 
       printTable:function () {

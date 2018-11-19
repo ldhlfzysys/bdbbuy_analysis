@@ -42,7 +42,7 @@
 
 <script>
   import {serverBaseURL} from '../../globalConfig'
-  import {formatDate, customDateParse, range}from '../CommonTool/commonMethod'
+  import {formatDate, customDateParse, range, getTimeByTimeZone}from '../CommonTool/commonMethod'
   import echarts from 'echarts'
   import {chartTimeStatistic, chartAreaStatistic} from './chartInfo'
 
@@ -94,8 +94,8 @@
     mounted: function () {
       // 页面加载
       console.log('这里是销售统计页面')
-      const end = new Date();
-      const start = new Date();
+      const end = getTimeByTimeZone(-5);
+      const start = getTimeByTimeZone(-5);
       start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
       this.dateValue = [start, end]
       this.areaModel = ['all']
@@ -457,48 +457,48 @@
           shortcuts: [{
             text: '过去一天',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
               picker.$emit('pick', [start, end]);
             }
           }, {
             text: '过去一周',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
               picker.$emit('pick', [start, end]);
             }
           }, {
             text: '过去一个月',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(1));
               picker.$emit('pick', [start, end]);
             }
           }, {
             text: '过去三个月',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(3));
               picker.$emit('pick', [start, end]);
             }
           }, {
             text: '过去六个月',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(6));
               picker.$emit('pick', [start, end]);
             }
           }, {
             text: '过去一年',
             onClick(picker) {
-              const end = new Date();
-              const start = new Date();
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
               start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(12));
               picker.$emit('pick', [start, end]);
             }
