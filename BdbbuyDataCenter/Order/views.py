@@ -56,10 +56,22 @@ def get_order_list(request):
     refund_list = Refunds.objects.filter(create_at__range=(search_from_datetime, search_to_datetime)).values('refund', 'order_id', 'create_at')\
         .order_by('create_at')
 
-    all_refund_list = [refund['refund'] / 100.0 for refund in refund_list.iterator()]
+    all_refund_list = []
+    refund_order_id_list = [refund['order_id'] for refund in refund_list]
+    refund_order_q = Orders.objects.filter(Q(order_id__in=refund_order_id_list))\
+        .values('order_id', 'area_id', 'create_at', 'status', 'tax_total', 'total')\
+        .order_by('create_at')
+    for order in refund_order_q.iterator():
+        if areas.find('all') != -1 or str(order['area_id']) in areas.split('-'):
+            for refund in refund_list.iterator():
+                if refund['order_id'] == order['order_id']:
+                    all_refund_list.append(refund['refund'] / 100.0)
+
     refund_order = len(all_refund_list)
     refund_total = sum(all_refund_list)
-    print(refund_total)
+
+    # print('ffffffff')
+    # print(timestamp1)
 
     for order in all_order_q.iterator():
         # 统计地区销售数据
@@ -72,7 +84,7 @@ def get_order_list(request):
         else:
             last_sale = area_order_info[order['area_id']][0]
             area_order_info[order['area_id']] = (last_sale + float(order['total']), area_order_info[order['area_id']][1])
-
+        # print(datetime_timestamp(order['create_at'], 's'))
         if datetime_timestamp(order['create_at'], 's') >= timestamp1:
             # 当前需要统计的订单
             all_area_order_list.append(order)
@@ -83,7 +95,7 @@ def get_order_list(request):
                 validate_order_list.append(order)
         else:
             # 前一个时期的订单
-            if areas.find('all') != -1 or order['area_id'] in areas.split('-'):
+            if areas.find('all') != -1 or str(order['area_id']) in areas.split('-'):
                 last_validate_order_count += 1
 
     area_info = {}
@@ -93,8 +105,8 @@ def get_order_list(request):
     if diversion == 0:
         diversion = 1
     rate = [100, 1][diversion == 1]
+
     order_rate = ((len(validate_order_list) - last_validate_order_count) / diversion) * rate
-    print(sale_total)
     order_total = sale_total
     sale_total -= refund_total
     sale_total -= tax_total
