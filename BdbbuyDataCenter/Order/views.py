@@ -64,14 +64,12 @@ def get_order_list(request):
     for order in refund_order_q.iterator():
         if areas.find('all') != -1 or str(order['area_id']) in areas.split('-'):
             for refund in refund_list.iterator():
-                if refund['order_id'] == order['order_id']:
+                if str(refund['order_id']) == str(order['order_id']):
                     all_refund_list.append(refund['refund'] / 100.0)
 
     refund_order = len(all_refund_list)
     refund_total = sum(all_refund_list)
 
-    # print('ffffffff')
-    # print(timestamp1)
 
     for order in all_order_q.iterator():
         # 统计地区销售数据
@@ -84,7 +82,6 @@ def get_order_list(request):
         else:
             last_sale = area_order_info[order['area_id']][0]
             area_order_info[order['area_id']] = (last_sale + float(order['total']), area_order_info[order['area_id']][1])
-        # print(datetime_timestamp(order['create_at'], 's'))
         if datetime_timestamp(order['create_at'], 's') >= timestamp1:
             # 当前需要统计的订单
             all_area_order_list.append(order)
