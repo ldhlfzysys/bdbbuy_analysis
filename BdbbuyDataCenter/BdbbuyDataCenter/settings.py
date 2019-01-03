@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'werkzeug_debugger_runserver',
+    'django_extensions',
 
     'AdminUser',
     'Cart',
@@ -95,6 +97,9 @@ CORS_ALLOW_HEADERS = (
     'Pragma',
 )
 
+
+# http重定向
+SECURE_SSL_REDIRECT = True
 
 ROOT_URLCONF = 'BdbbuyDataCenter.urls'
 
