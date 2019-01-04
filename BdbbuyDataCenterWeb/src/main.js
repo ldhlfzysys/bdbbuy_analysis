@@ -26,7 +26,7 @@ Vue.use(ElementUI)
 
 const router = new VueRouter({
   mode: 'history',
-  base: '/bdbbuyanalysis/',
+  base: '/',
   routes: [
     {
       path: '/',
