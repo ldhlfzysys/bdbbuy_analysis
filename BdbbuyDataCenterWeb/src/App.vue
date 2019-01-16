@@ -2,7 +2,7 @@
 <template>
   <div id="app">
     <!--<img src="./assets/logo.png">-->
-    <Menu mode="horizontal" :active-name="menuActiveName"  @on-select="gotoPage">
+    <Menu mode="horizontal" :active-name="menuActiveName"  @on-select="gotoPage" style="z-index:99999999999">
       <MenuItem name="saleData">
         <Icon type="ios-stats" />
         销售统计
@@ -16,6 +16,11 @@
         <MenuItem name="inventoryWarning_ordercount" id="inventoryWarning_2">按销量筛选</MenuItem>
         <MenuItem name="inventoryWarning_date" id="inventoryWarning_3">筛选过期商品</MenuItem>
       </Submenu>
+
+      <MenuItem name="orderData">
+        <Icon type="ios-stats-outline" />
+        销量统计
+      </MenuItem>
 
     </Menu>
     <router-view></router-view>

@@ -23,6 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'z8=#4(^8*mpc3w7)lw%23h(nb-2=z4rz-ozk#-8w!@bjk=2p4x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# 用于切换release和debug环境
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
@@ -99,7 +100,13 @@ CORS_ALLOW_HEADERS = (
 
 
 # http重定向
-SECURE_SSL_REDIRECT = True
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+else:
+    SECURE_SSL_REDIRECT = True
+
+
+
 
 ROOT_URLCONF = 'BdbbuyDataCenter.urls'
 
@@ -125,13 +132,19 @@ WSGI_APPLICATION = 'BdbbuyDataCenter.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+db_host_name = ""
+if DEBUG:
+    db_host_name = 'bdbbuy-wai2.mysql.rds.aliyuncs.com'
+else:
+    db_host_name = 'bdbbuy-wai2.mysql.rds.aliyuncs.com'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'mobile',
         'USER': 'root',
         'PASSWORD': 'Bbdbuy@1100',
-        'HOST': 'bdbbuy-nei2.mysql.rds.aliyuncs.com',
+        'HOST': db_host_name,
         'PORT': '3306',
     }
 }

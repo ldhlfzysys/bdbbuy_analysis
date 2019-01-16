@@ -11,6 +11,7 @@ import ElementUI from 'element-ui'
 import '../node_modules/element-ui/lib/theme-chalk/index.css'
 import inventoryWarning from './components/InventoryWarning/inventoryWarning.vue'
 import saleData from './components/SaleData/saleData.vue'
+import orderData from './components/OrderData/OrderData.vue'
 import serverBaseURL from './globalConfig.js'
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
@@ -39,6 +40,10 @@ const router = new VueRouter({
     {
       path: '/saleData',
       component: saleData
+    },
+    {
+      path: '/orderData',
+      component: orderData
     }
 
   ]

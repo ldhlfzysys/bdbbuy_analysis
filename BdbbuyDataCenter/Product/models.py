@@ -74,6 +74,15 @@ class Product(CModel):
         db_table = 'product'
 
     @classmethod
+    def get_product(cls, **kwargs):
+        product = None
+        try:
+            product = Product.objects.get(**kwargs)
+        except Exception as e:
+            print(e)
+        return product
+
+    @classmethod
     def get_lowcount_outofdate_products(cls, **kwargs):
         low_count = kwargs.get('low_count', None)
         out_of_date = kwargs.get('out_of_date', False)

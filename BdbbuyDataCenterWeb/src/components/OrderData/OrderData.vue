@@ -1,0 +1,314 @@
+<template>
+  <div id="main" style="margin-top: 20px" class="main">
+    <Row>
+      <Col span="4">
+        <Menu  id="catogery_menu" @on-select="selectMenu" style="width: 95%;min-height: 500px">
+          <MenuItem name="all">全部分类</MenuItem>
+          <Submenu v-for="item in hasSubCatogeryList" :name="item.catogery_id" :key="item.catogery_id">
+            <template slot="title">
+              {{item.catogery_name}}
+            </template>
+            <MenuItem :name="item.catogery_id" :id="item.catogery_id">
+              {{item.catogery_name}}
+            </MenuItem>
+            <MenuItem v-for="subitem in item.catogery_sublist" :name="subitem.catogery_id" :key="subitem.catogery_id">
+              {{subitem.catogery_name}}
+            </MenuItem>
+          </Submenu>
+          <MenuItem v-for="subitem in noSubCatogeryList" :name="subitem.catogery_id" :key="subitem.catogery_id">
+            {{subitem.catogery_name}}
+          </MenuItem>
+
+        </Menu>
+      </Col>
+
+      <Col span="20">
+        <br>
+        <Row>
+          <Col span="3">
+            <label style="margin-top: 12px">时间段选择：</label>
+
+          </Col>
+
+          <Col span="9">
+            <el-date-picker
+              v-model="dateValue"
+              type="datetimerange"
+              :picker-options="pickerOptions"
+              range-separator="To"
+              start-placeholder="Start date"
+              end-placeholder="End date"
+              style="margin-left: 0;width: 100%">
+            </el-date-picker>
+
+          </Col>
+
+          <Col span="2">
+            <Button type="primary" ghost style="margin-top: 5px" v-on:click="getData">查 询</Button>
+          </Col>
+        </Row>
+        <br>
+        <Row>
+          <Col span="23">
+            <Table id="orderProductTable"  border :data="tableData" :columns="tableColumns" stripe :loading="tableLoading"></Table>
+            <div style="margin: 20px;overflow: hidden">
+              <div style="float: right;">
+                <Page ref="pages" :total="totalCount" :current="pageCurrent"
+                      :page-size="pageSize"
+                      show-total @on-change="changePage"></Page>
+              </div>
+            </div>
+          </Col>
+        </Row>
+
+      </Col>
+
+
+
+    </Row>
+  </div>
+</template>
+
+<script>
+  import {serverBaseURL} from '../../globalConfig'
+  import {formatDate, customDateParse, range, getTimeByTimeZone}from '../CommonTool/commonMethod'
+  import MenuItem from 'iview/src/components/menu/menu-item.vue'
+
+  export default {
+    name: 'OrderData',
+
+    data () {
+      return {
+        dateValue: '',
+        catogeryModel: 'all',
+        tableData: [],
+        tableColumns: [],
+        tableLoading: false,
+        pickerOptions: [],
+
+        totalCount: 0,
+        pageCurrent: 1,
+        pageSize: 30,
+
+        hasSubCatogeryList: [],
+        noSubCatogeryList: [],
+
+        tableLoading: false,
+        allProductList: []
+
+      }
+    },
+    mounted: function () {
+      const end = getTimeByTimeZone(-5);
+      const start = getTimeByTimeZone(-5);
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
+      this.dateValue = [start, end]
+      this.getShotcuts()
+      this.getCatogery()
+      this.setTableColumn()
+      this.getData()
+    },
+
+    methods: {
+      getData:function () {
+        let url = serverBaseURL + 'product/getProductSale?fromDate='
+          + this.customFormatDate(this.dateValue[0]) + '&toDate='+ this.customFormatDate(this.dateValue[1])
+          + '&catogeryId=' + this.catogeryModel
+
+        this.allProductList = []
+        this.tableData = []
+        this.tableLoading = true
+        this.$http.get(url).then(function (response) {
+          var status = response.status;
+          this.tableLoading = false
+          if (status == 200) {
+            var result = response.body;
+            this.allProductList = result['data']['product_list']
+            this.totalCount = result['data']['totalCount']
+            this.changePage(1)
+          }
+        }, function (response) {
+          console.log("发生错误")
+          var str = response.body.message
+          this.tableLoading = false
+          this.$Message.success(str)
+        });
+
+      },
+
+      changePage:function (index) {
+        var startPosition = 0
+        var endPosition = this.allProductList.length
+        if (this.allProductList.length > this.pageSize) {
+          startPosition = this.pageSize * (index - 1)
+          endPosition = this.pageSize * index
+        }
+        this.tableData = this.allProductList.slice(startPosition, endPosition)
+      },
+
+      selectMenu:function (menu) {
+        this.catogeryModel = menu
+        this.getData()
+      },
+
+      getCatogery:function () {
+        this.hasSubCatogeryList = []
+        this.noSubCatogeryList = []
+
+        let url = serverBaseURL + 'product/getProductCatogery'
+        this.$http.get(url).then(function (response) {
+          var status = response.status;
+          if (status == 200) {
+            var result = response.body;
+            var catogeryList = result['data']['catogery_list']
+            for (var i = 0;i < catogeryList.length;i++) {
+              var catogery = catogeryList[i]
+              if (catogery.catogery_sublist.length > 0) {
+                this.hasSubCatogeryList.push(catogery)
+              } else {
+                this.noSubCatogeryList.push(catogery)
+              }
+            }
+
+          }
+        }, function (response) {
+          console.log("发生错误")
+          var str = response.body.message
+          this.$Message.success(str)
+        });
+      },
+
+      customFormatDate:function (date) {
+        let format = 'yyyy-MM-dd hh:mm:ss'
+        return formatDate(date, format)
+      },
+
+      setTableColumn:function () {
+        this.tableColumns = [
+          {
+            title: 'id',
+            key: 'product_id',
+            align: 'center',
+          },
+          {
+            title: '中文名',
+            key: 'name',
+            align: 'left',
+          },
+          {
+            title: 'SKU',
+            key: 'sku',
+            align: 'center',
+          },
+          {
+            title: '规格',
+            key: 'description',
+            align: 'center',
+          },
+          {
+            title: '销量',
+            key: 'sale_count',
+            align: 'center',
+          },
+          {
+            title: '库存数量',
+            key: 'product_qty',
+            align: 'center',
+          },
+        ]
+      },
+
+
+      getShotcuts:function () {
+        var self = this;
+        this.pickerOptions = {
+          shortcuts: [{
+            text: '过去一天',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '过去一周',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '过去一个月',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(1));
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '过去三个月',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(3));
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '过去六个月',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(6));
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '过去一年',
+            onClick (picker) {
+              const end = getTimeByTimeZone(-5);
+              const start = getTimeByTimeZone(-5);
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * self.getMonthDays(12));
+              picker.$emit('pick', [start, end]);
+            }
+          }]
+        }
+      },
+
+      getMonthDays:function (month) {
+        var date = new Date()
+        var daysInMonth = new Array([0],[31],[28],[31],[30],[31],[30],[31],[31],[30],[31],[30],[31]);
+        var strYear = date.getFullYear();
+        if(strYear%4 == 0 && strYear%100 != 0){
+          daysInMonth[2] = 29;
+        }
+
+        var past_days = 0
+        for (var i = month; i > 0; i--) {
+          var searchMonth = date.getMonth()  - i;
+          searchMonth = searchMonth <= 0 ? searchMonth + 12:searchMonth;
+          past_days += parseInt(daysInMonth[searchMonth])
+        }
+
+        return past_days;
+
+      },
+    }
+  }
+</script>
+
+
+
+
+
+<style scoped>
+  label {
+    /*width: 25%;*/
+    display: inline-block;
+    padding: 0 5px;
+    vertical-align: middle;
+    font-style: normal;
+    color: black;
+    margin-left: 0px;
+  }
+
+</style>
