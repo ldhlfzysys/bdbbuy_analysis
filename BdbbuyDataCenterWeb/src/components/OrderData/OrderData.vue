@@ -46,6 +46,10 @@
           <Col span="2">
             <Button type="primary" ghost style="margin-top: 5px" v-on:click="getData">查 询</Button>
           </Col>
+
+          <Col span="9">
+            <Button type="primary" ghost style="margin-top: 5px;float: right" v-on:click="exportTableData">导出表格</Button>
+          </Col>
         </Row>
         <br>
         <Row>
@@ -73,6 +77,10 @@
   import {serverBaseURL} from '../../globalConfig'
   import {formatDate, customDateParse, range, getTimeByTimeZone}from '../CommonTool/commonMethod'
   import MenuItem from 'iview/src/components/menu/menu-item.vue'
+  import FileSaver from 'file-saver'
+  import XLSX from 'xlsx'
+  import XLSX_SAVE from  'file-saver'
+  import {isString}from '../CommonTool/commonMethod'
 
   export default {
     name: 'OrderData',
@@ -218,6 +226,70 @@
         ]
       },
 
+      exportTableData:function () {
+          /* generate workbook object from table */
+          // var wb = XLSX.utils.table_to_book(document.querySelector('#inventoryWarningTable'))
+          var wb = XLSX.utils.book_new();
+          var json_data = []
+          var header_keys = []
+          var header_titles = []
+
+          for (var i = 0; i < this.tableColumns.length; i++) {
+            var column = this.tableColumns[i];
+            header_keys.push(column['key'])
+            header_titles.push(column['title'])
+          }
+
+
+          for (var i = 0;i < this.allProductList.length;i++) {
+            var record = this.allProductList[i];
+
+            var dic = {};
+            for (var j = 0;j < header_keys.length;j++) {
+              if (j == 0) {
+                dic['序号'] = i + 1
+              }
+              var header_key = header_keys[j]
+              var header_title = header_titles[j]
+              var data = record[header_key]
+              dic[header_title] = data;
+            }
+            json_data.push(dic)
+          }
+
+
+          var ws = XLSX.utils.json_to_sheet(json_data);
+          /* get binary string as output */
+
+          for (var key in ws) {
+            var cell = ws[key]
+            if (!isString(cell)) {
+              try {
+                cell['s'] = {border: borderAll}
+              } catch (e) {
+                console.log(e)
+              }
+
+            }
+          }
+
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+          var wbout = XLSX.write(wb, {type: "binary", bookType: "xlsx"});
+
+          try {
+            XLSX_SAVE.saveAs(new Blob([this.s2ab(wbout)], {type: "application/octet-stream"}), "分类销量统计.xlsx");
+          } catch (e) { if (typeof console !== 'undefined') console.log(e, wbout) }
+          return wbout
+      },
+
+      s2ab:function(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i !== s.length; ++i) {
+          view[i] = s.charCodeAt(i) & 0xFF;
+        }
+        return buf;
+      },
 
       getShotcuts:function () {
         var self = this;

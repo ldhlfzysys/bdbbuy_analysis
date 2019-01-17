@@ -106,8 +106,6 @@ else:
     SECURE_SSL_REDIRECT = True
 
 
-
-
 ROOT_URLCONF = 'BdbbuyDataCenter.urls'
 
 TEMPLATES = [
@@ -136,7 +134,7 @@ db_host_name = ""
 if DEBUG:
     db_host_name = 'bdbbuy-wai2.mysql.rds.aliyuncs.com'
 else:
-    db_host_name = 'bdbbuy-wai2.mysql.rds.aliyuncs.com'
+    db_host_name = 'bdbbuy-nei2.mysql.rds.aliyuncs.com'
 
 DATABASES = {
     'default': {
