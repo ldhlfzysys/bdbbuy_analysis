@@ -146,8 +146,8 @@
       setTableColumn:function () {
         this.tableColumns = [
           {
-            title: 'id',
-            key: 'product_id',
+            title: '英文名',
+            key: 'en_name',
             // width: 100,
             align: 'center',
           },
