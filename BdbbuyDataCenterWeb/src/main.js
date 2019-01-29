@@ -12,6 +12,7 @@ import '../node_modules/element-ui/lib/theme-chalk/index.css'
 import inventoryWarning from './components/InventoryWarning/inventoryWarning.vue'
 import saleData from './components/SaleData/saleData.vue'
 import orderData from './components/OrderData/OrderData.vue'
+import login from './components/Login/Login.vue'
 import serverBaseURL from './globalConfig.js'
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
@@ -24,14 +25,13 @@ Vue.use(VueResource);
 Vue.use(iView);
 Vue.use(ElementUI)
 
-
 const router = new VueRouter({
   mode: 'history',
   base: '/',
   routes: [
     {
       path: '/',
-      component: saleData
+      component: orderData
     },
     {
       path: '/inventoryWarning',
@@ -44,7 +44,11 @@ const router = new VueRouter({
     {
       path: '/orderData',
       component: orderData
-    }
+    },
+    {
+      path: '/login',
+      component: login
+    },
 
   ]
 })

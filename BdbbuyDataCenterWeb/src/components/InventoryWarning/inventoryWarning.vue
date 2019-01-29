@@ -149,7 +149,7 @@
             title: '英文名',
             key: 'en_name',
             // width: 100,
-            align: 'center',
+            align: 'left',
           },
           {
             title: '中文名',

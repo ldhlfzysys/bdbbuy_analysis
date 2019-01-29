@@ -48,7 +48,7 @@ export function getTimeByTimeZone(timeZone) {
   var offset = timeZone; //时区，北京市+8  加拿大为 -5
   var  localSecondTime = utc + (3600000 * offset);  //本地对应的毫秒数
   var date = new Date(localSecondTime);
-  console.log("根据本地时间得知" + timeZone + "时区的时间是 " + date.toLocaleString());
-  console.log("系统默认展示时间方式是：" + date);
+  // console.log("根据本地时间得知" + timeZone + "时区的时间是 " + date.toLocaleString());
+  // console.log("系统默认展示时间方式是：" + date);
   return date;
 }

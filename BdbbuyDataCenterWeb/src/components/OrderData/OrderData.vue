@@ -196,7 +196,7 @@
           {
             title: '英文名',
             key: 'en_name',
-            align: 'center',
+            align: 'left',
           },
           {
             title: '中文名',
