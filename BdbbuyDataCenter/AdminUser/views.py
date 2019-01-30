@@ -26,8 +26,13 @@ def getAdminUserAuth(request):
     if user != '':
         url = Base_host + "api/index/adminusername?cookie_info=" + quote(user, 'utf-8')
         request = urllib.request.Request(url)
+        print('bbbbbb')
+        print(url)
         try:
             response = urllib.request.urlopen(request, timeout=60)
+            print('ttttt')
+            print(response)
+            print(response.read())
             result = json.loads(response.read())
             response.close()
         except Exception as e:
@@ -39,5 +44,5 @@ def getAdminUserAuth(request):
             if auth_num == 23 or auth_num == 25:
                 auth_n = auth_num
                 break
-    return JsonResponse({'data': {'auth': auth_n, 'user_name':admin_user_name}})
+    return JsonResponse({'data': {'auth': auth_n, 'user_name': admin_user_name}})
 
