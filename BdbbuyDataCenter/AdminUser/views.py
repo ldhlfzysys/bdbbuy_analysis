@@ -16,24 +16,21 @@ from django.db.models import Q
 from .models import *
 
 
-# Base_host = "http://localhost:1118/"
-Base_host = "https://m.bdbbuy.com/"
+Base_host = "http://localhost:1118/"
+# Base_host = "https://m.bdbbuy.com/"
 
 @require_http_methods(["GET"])
 def getAdminUserAuth(request):
     user = request.GET.get('user', '')
     auth_n = -1
     if user != '':
+        print(user)
         url = Base_host + "api/index/adminusername?cookie_info=" + quote(user, 'utf-8')
         request = urllib.request.Request(url)
-        print('bbbbbb')
-        print(url)
         try:
             response = urllib.request.urlopen(request, timeout=60)
-            print('ttttt')
-            print(response)
-            print(response.read())
-            result = json.loads(response.read())
+            content = response.read().decode('utf8')
+            result = json.loads(content)
             response.close()
         except Exception as e:
             print(e)
