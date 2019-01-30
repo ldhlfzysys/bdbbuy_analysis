@@ -16,8 +16,8 @@ from django.db.models import Q
 from .models import *
 
 
-Base_host = "http://localhost:1118/"
-# Base_host = "https://m.bdbbuy.com/"
+# Base_host = "http://localhost:1118/"
+Base_host = "https://m.bdbbuy.com/"
 
 @require_http_methods(["GET"])
 def getAdminUserAuth(request):
