@@ -2,6 +2,8 @@ import echarts from 'echarts'
 
 export var chartTimeStatistic = function (dataDic) {
 
+  var rotate = dataDic.rotate ?  dataDic.rotate : 0
+
   var  option = {
     tooltip: {
       trigger: 'item',
@@ -29,7 +31,11 @@ export var chartTimeStatistic = function (dataDic) {
       },
       min: dataDic.minValue,
       max: dataDic.maxValue,
-      data: dataDic.xAxisData
+      data: dataDic.xAxisData,
+      axisLabel:{
+        interval:0,
+        rotate:rotate
+      }
 
     },
     yAxis: {

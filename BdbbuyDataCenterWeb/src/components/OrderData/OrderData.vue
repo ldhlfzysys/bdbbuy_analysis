@@ -46,8 +46,21 @@
           <Col span="2">
             <Button type="primary" ghost style="margin-top: 5px" v-on:click="getData">查 询</Button>
           </Col>
+          <Col span="2">
+            <Button type="primary" ghost style="margin-top: 5px" v-on:click="showStatisticPic">查看统计图</Button>
+            <Modal v-model="showStatistic"
+                   width="900">
+              <p slot="header" style="color:#f60;text-align:center">
+                <span>该时段内订单销量分类统计图</span>
+              </p>
+              <div id="catogeryOrder" style="width: 880px;height: 400px;"></div>
+              <div slot="footer">
+                <Button type="primary" ghost style="margin-top: 5px" v-on:click="showStatistic=false">关闭</Button>
+              </div>
+            </Modal>
+          </Col>
 
-          <Col span="9">
+          <Col span="7">
             <Button type="primary" ghost style="margin-top: 5px;float: right" v-on:click="exportTableData">导出表格</Button>
           </Col>
         </Row>
@@ -78,9 +91,11 @@
   import {formatDate, customDateParse, range, getTimeByTimeZone}from '../CommonTool/commonMethod'
   import MenuItem from 'iview/src/components/menu/menu-item.vue'
   import FileSaver from 'file-saver'
+  import echarts from 'echarts'
   import XLSX from 'xlsx'
   import XLSX_SAVE from  'file-saver'
   import {isString}from '../CommonTool/commonMethod'
+  import {chartTimeStatistic, chartAreaStatistic} from '../SaleData/chartInfo'
 
   export default {
     name: 'OrderData',
@@ -102,7 +117,14 @@
         noSubCatogeryList: [],
 
         tableLoading: false,
-        allProductList: []
+        allProductList: [],
+
+        storeProductList: [],
+        lastFromDateValue: '',
+        lastToDateValue: '',
+
+        showStatistic: false,
+        statisticChart: ''
 
       }
     },
@@ -115,9 +137,19 @@
       this.getCatogery()
       this.setTableColumn()
       this.getData()
+      this.initChart()
     },
 
     methods: {
+
+      initChart:function () {
+        var elementId = document.getElementById('catogeryOrder')
+        echarts.dispose(elementId)
+        var chart = echarts.init(elementId);
+        this.statisticChart = chart;
+
+      },
+
       getData:function () {
         let url = serverBaseURL + 'product/getProductSale?fromDate='
           + this.customFormatDate(this.dateValue[0]) + '&toDate='+ this.customFormatDate(this.dateValue[1])
@@ -141,6 +173,95 @@
           this.tableLoading = false
           this.$Message.success(str)
         });
+
+      },
+
+      getAllData:function () {
+        console.log('获取统计数据')
+        let url = serverBaseURL + 'product/getCatogeryGroupSale?fromDate='
+          + this.customFormatDate(this.dateValue[0]) + '&toDate='+ this.customFormatDate(this.dateValue[1])
+
+        this.storeProductList = []
+        this.lastFromDateValue = this.dateValue[0]
+        this.lastToDateValue = this.dateValue[1]
+        this.statisticChart.showLoading({
+          text: '数据获取中',
+          effect: 'whirling'
+        })
+        this.$http.get(url).then(function (response) {
+          var status = response.status;
+          if (status == 200) {
+            var result = response.body;
+            this.storeProductList = result['data']['statistic_list']
+            console.log(this.storeProductList)
+            this.drawStatisticInfo()
+            this.statisticChart.hideLoading()
+          }
+        }, function (response) {
+          console.log("发生错误")
+          var str = response.body.message
+          this.$Message.success(str)
+        });
+
+      },
+
+      showStatisticPic:function () {
+        if (this.storeProductList.length > 0
+          && this.lastFromDateValue == this.dateValue[0]
+          && this.lastToDateValue == this.dateValue[1]) {
+          // 如果数据存在并且选择的日期未发生改变，则使用缓存数据
+          this.drawStatisticInfo();
+        } else {
+          this.getAllData();
+        }
+        this.showStatistic = true
+
+      },
+
+      drawStatisticInfo:function () {
+        var self = this
+        var dataList = []
+        var xAxisData = []
+
+        for (var index in this.storeProductList) {
+          var catogery = this.storeProductList[index]
+          dataList.push(catogery['catogery_sale'])
+          xAxisData.push(catogery['catogery_name'])
+        }
+
+        var serie_dic = {
+          'name':'各时段订单数统计',
+          'type':'bar',
+          'itemStyle':{
+            'normal':{
+              'color': '#63a2c3'
+            }
+          },
+          'label': {
+            'normal': {
+              'color': '#ffffff',
+              'show': true,
+              'formatter': function (params) {
+                if (params.value > 0) {
+                  return params.value;
+                } else {
+                  return '';
+                }
+              }
+            }
+          },
+          'data': dataList,
+        }
+
+        var dataDic = {}
+
+        dataDic['title'] = '各分类销量统计'
+        dataDic['subtitle'] = ''
+        dataDic['series'] = [serie_dic]
+        dataDic['xAxisType'] = 'category'
+        dataDic['xAxisData'] = xAxisData
+        dataDic['rotate'] = 40
+        this.statisticChart.setOption(chartTimeStatistic(dataDic));
 
       },
 

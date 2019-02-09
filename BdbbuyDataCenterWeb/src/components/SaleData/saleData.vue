@@ -260,9 +260,6 @@
           xAxisData.push(key_str)
         }
 
-        console.log('uuuuuuuiii')
-        console.log(dataList)
-        console.log(xAxisData)
         var serie_dic = {
           'name':'各时段订单数统计',
           'type':'bar',
