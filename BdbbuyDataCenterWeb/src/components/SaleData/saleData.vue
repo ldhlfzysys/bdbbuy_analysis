@@ -1,23 +1,35 @@
 <template>
   <div id="main" style="margin-left: 3%;margin-right: 3%;margin-top: 20px">
     <Row>
-      <Col :xs="8" :sm="8" :md="8" :lg="8">
+      <Col span="4">
         <h2 style="color: #363e4f;text-align: left;">销售数据一览</h2>
       </Col>
-      <Select v-model="areaModel" multiple style="width:200px;float: right;margin-right: 20px" size="large" @on-change="getData">
-        <Option v-for="item in areaList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-      </Select>
 
-      <el-date-picker
-        v-model="dateValue"
-        type="datetimerange"
-        :picker-options="pickerOptions"
-        range-separator="To"
-        start-placeholder="Start date"
-        end-placeholder="End date"
-        v-on:change="getData"
-        style="float: right;margin-right: 50px">
-      </el-date-picker>
+      <Col span="16">
+        <Select v-model="timeModel" style="width:80px;float: right" size="large" @on-change="">
+          <Option v-for="item in timeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        </Select>
+        <el-date-picker
+          v-model="dateValue"
+          type="datetimerange"
+          :picker-options="pickerOptions"
+          range-separator="To"
+          start-placeholder="Start date"
+          end-placeholder="End date"
+          v-on:change="timeChange"
+          style="float: right;margin-right: 20px">
+        </el-date-picker>
+
+
+      </Col>
+      <Col span="4">
+        <Select v-model="areaModel" multiple style="width:200px;float: right" size="large" @on-change="getData">
+          <Option v-for="item in areaList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        </Select>
+      </Col>
+
+
+
     </Row>
 
     <br>
@@ -61,6 +73,11 @@
         chartDic: {},
 
         areaModel:"",
+        timeModel:"day",
+        timeList: [{
+          'label': '日',
+          'value': 'day'
+        }],
 
         saleCard: (h) => {
         return h('div',
@@ -98,10 +115,10 @@
       const start = getTimeByTimeZone(-5);
       start.setTime(start.getTime() - 3600 * 1000 * 24 * 1);
       this.dateValue = [start, end]
+      this.changeStasticTimeList()
       this.areaModel = ['all']
       this.getAreaList()
       this.getShotcuts()
-      // this.getData()
     },
     methods: {
 
@@ -130,6 +147,84 @@
           var str = response.body.message
           self.$Message.success(str)
         });
+      },
+
+      timeChange:function () {
+        this.changeStasticTimeList()
+        this.getData()
+
+      },
+
+      changeStasticTimeList:function () {
+        var delta_time = this.dateValue[1] - this.dateValue[0];
+
+        var date0_year = this.dateValue[0].getUTCFullYear()
+        var date1_year = this.dateValue[1].getUTCFullYear()
+
+        var date0_month = this.dateValue[0].getUTCMonth()
+        var date1_month = this.dateValue[1].getUTCMonth()
+
+        var date0_week = this.getWeek(this.dateValue[0])
+        var date1_week = this.getWeek(this.dateValue[1])
+
+        this.timeList = []
+
+        let time_dic = {
+          'year': {
+            'label': '年',
+            'value': 'year'
+          },
+          'month': {
+            'label': '月',
+            'value': 'month'
+          },
+          'week' : {
+            'label': '周',
+            'value': 'week'
+          },
+          'day' : {
+            'label': '日',
+            'value': 'day'
+          }
+        }
+
+        var list = []
+        if (date0_year != date1_year) {
+          // 图表默认展示年组
+          list = ['year', 'month', 'week', 'day']
+          this.timeModel = 'year'
+        } else if (date0_month != date1_month) {
+          // 图表默认展示月组
+          list = ['month', 'week', 'day']
+          this.timeModel = 'month'
+        } else if (date0_week != date1_week) {
+          list = [ 'week', 'day']
+          this.timeModel = 'week'
+        } else {
+          list = ['day']
+          this.timeModel = 'day'
+        }
+
+        this.timeList = []
+        for (var i = 0; i < list.length;i++) {
+          var key = list[i]
+          this.timeList.push(time_dic[key])
+        }
+
+      },
+
+      getWeek:function (date) {
+        // 先计算出该日期为第几周
+        let week = Math.ceil(date.getDate()/7);
+        let month = date.getMonth() + 1;
+        // 判断这个月前7天是周几，如果不是周一，则计入上个月
+        if  (date.getDate() < 7) {
+          if (date.getDay() !== 1) {
+            week = 5;
+            month = date.getMonth();
+          }
+        }
+        return `${month}-${week}`
       },
 
       updateSaleData:function () {
@@ -419,14 +514,14 @@
       getMonthDays:function (month) {
         var date = new Date()
         var daysInMonth = new Array([0],[31],[28],[31],[30],[31],[30],[31],[31],[30],[31],[30],[31]);
-        var strYear = date.getFullYear();
+        var strYear = date.getUTCFullYear();
         if(strYear%4 == 0 && strYear%100 != 0){
           daysInMonth[2] = 29;
         }
 
         var past_days = 0
         for (var i = month; i > 0; i--) {
-          var searchMonth = date.getMonth()  - i;
+          var searchMonth = date.getUTCMonth()  - i;
           searchMonth = searchMonth <= 0 ? searchMonth + 12:searchMonth;
           past_days += parseInt(daysInMonth[searchMonth])
         }
