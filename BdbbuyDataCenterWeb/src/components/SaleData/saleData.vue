@@ -6,7 +6,7 @@
       </Col>
 
       <Col span="16">
-        <Select v-model="timeModel" style="width:80px;float: right" size="large" @on-change="">
+        <Select v-model="timeModel" style="width:80px;float: right" size="large" @on-change="changeStatisticGroupKey">
           <Option v-for="item in timeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
         <el-date-picker
@@ -132,8 +132,6 @@
           if (status == 200) {
             var result = response.body;
             self.orderData = result['data']
-            console.log('gggggg')
-            console.log(self.orderData)
             self.updateSaleData()
             self.updateOrderData()
             self.chartSaleData()
@@ -153,6 +151,10 @@
         this.changeStasticTimeList()
         this.getData()
 
+      },
+
+      changeStatisticGroupKey:function () {
+        this.chartSaleData()
       },
 
       changeStasticTimeList:function () {
@@ -221,7 +223,7 @@
         if  (date.getDate() < 7) {
           if (date.getDay() !== 1) {
             week = 5;
-            month = date.getMonth();
+            month = date.getMonth() + 1;
           }
         }
         return `${month}-${week}`
@@ -276,25 +278,72 @@
 
         var dataDic = {}
         var dataList = []
+
+        var group_dic = {}
+        var title = '日销售额'
         this.orderData['validate_order_list'].forEach(function (order) {
-          var dic = {'value': [order['create_at'], order['total']]}
+          var group_key = ''
+          var crate_time_str = order['create_at'].replace('T', ' ').replace('Z', '')
+          var crate_time = new Date(Date.parse(crate_time_str.replace(/-/g, '/')))
+          if (self.timeModel == 'year') {
+            // 按照年组group统计图数据
+            var year = crate_time.getUTCFullYear()
+            group_key = year
+            title = '年销售额'
+
+          } else if (self.timeModel == 'month') {
+            // 按照月组group统计图数据
+            var month = crate_time.getUTCMonth() + 1
+            group_key = month
+            title = '月销售额'
+
+          } else if (self.timeModel == 'week') {
+            // 按照周组group统计图数据
+            var origin_week = self.getWeek(crate_time)
+            var week = origin_week.split('-')[0] + '月第' + origin_week.split('-')[1] + '周'
+            group_key = week
+            title = '周销售额'
+
+          } else {
+            // 按照日组group统计图数据
+            var date = crate_time_str.split(' ')[0]
+            group_key = date
+            title = '日销售额'
+          }
+          var total = parseFloat(order['total'])
+          if (group_dic.hasOwnProperty(group_key)) {
+            group_dic[group_key] = group_dic[group_key] + total
+          } else {
+            group_dic[group_key] = total
+          }
+        })
+
+        // 统计图数据
+        var sorted_keys = Object.keys(group_dic).sort()
+        sorted_keys.forEach(function (key) {
+          var total_sale = group_dic[key].toFixed(2)
+          var dic = {'value': [key, total_sale]}
           dataList.push(dic)
         })
+
         var serie_dic = {
-          'name':'销售额',
-          'type':'line',
+          'name':title,
+          'type':'bar',
+          'barWidth' : 30,
           'itemStyle':{
             'normal':{
-              'color': '#63a2c3'
-            }
+              'color': '#63a2c3',
+              'label': {
+                'show': true, //开启显示
+                'position': 'top', //在上方显示
+                'textStyle': { //数值样式
+                  'color': 'black',
+                  'fontSize': 12
+                }
+              }
+            },
           },
           'data': dataList,
-          'markPoint' : {
-            'data' : [
-              {'type' : 'max', 'name': '最大值'},
-              {'type' : 'min', 'name': '最小值'}
-            ]
-          },
           'markLine': {
             'data' : [
               {'type' : 'average', 'name': '平均销售额'}
@@ -311,11 +360,11 @@
           }
         }
 
-        dataDic['title'] = '总销售额'
+        dataDic['title'] = title
         dataDic['subtitle'] = ''
         dataDic['yUnit'] = 'CAD'
         dataDic['series'] = [serie_dic]
-        dataDic['xAxisType'] = 'time'
+        dataDic['xAxisType'] = 'category'
         dataDic['minValue'] = this.customFormatDate(this.dateValue[0])
         dataDic['maxValue'] = this.customFormatDate(this.dateValue[1])
 
