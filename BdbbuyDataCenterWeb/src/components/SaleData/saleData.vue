@@ -294,13 +294,13 @@
           } else if (self.timeModel == 'month') {
             // 按照月组group统计图数据
             var month = crate_time.getUTCMonth() + 1
-            group_key = month
+            group_key = crate_time.getUTCFullYear() + '年' + month.toString() + '月'
             title = '月销售额'
 
           } else if (self.timeModel == 'week') {
             // 按照周组group统计图数据
             var origin_week = self.getWeek(crate_time)
-            var week = origin_week.split('-')[0] + '月第' + origin_week.split('-')[1] + '周'
+            var week = crate_time.getUTCFullYear() + '年' + origin_week.split('-')[0] + '月第' + origin_week.split('-')[1] + '周'
             group_key = week
             title = '周销售额'
 
@@ -325,6 +325,10 @@
           var dic = {'value': [key, total_sale]}
           dataList.push(dic)
         })
+
+        if (sorted_keys.length > 15) {
+          dataDic['rotate'] = 45
+        }
 
         var serie_dic = {
           'name':title,
