@@ -4,7 +4,7 @@ export var chartTimeStatistic = function (dataDic) {
 
   var rotate = dataDic.rotate ?  dataDic.rotate : 0
 
-  var endValue = dataDic.endValue ?   dataDic.endValue : 22
+  var endValue = dataDic.endValue ?   dataDic.endValue : 23
 
   var  option = {
     tooltip: {

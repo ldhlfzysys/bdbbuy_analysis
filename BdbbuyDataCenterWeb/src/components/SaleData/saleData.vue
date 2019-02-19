@@ -40,6 +40,7 @@
           <div id="saleInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
         <TabPane :label="orderCard">
+          <div id="ordercountInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
           <div id="orderInfo" style="width: 1200px;height: 500px;margin:0 auto;margin-top: 20px;margin-left: 0px"></div>
         </TabPane>
         <TabPane :label="areaOrderCard">
@@ -70,6 +71,7 @@
           'value': 'all'
         }],
         orderData:{},
+        orderCountData:[],
         chartDic: {},
 
         areaModel:"",
@@ -258,7 +260,7 @@
 
       initChart:function () {
         var self = this
-        var elementIdList = ['saleInfo', 'orderInfo','areaInfo']
+        var elementIdList = ['saleInfo', 'orderInfo','ordercountInfo','areaInfo']
         elementIdList.forEach(function (elID) {
           var elementId = document.getElementById(elID)
           echarts.dispose(elementId)
@@ -280,7 +282,9 @@
         var dataList = []
 
         var group_dic = {}
+        var order_count_group_dic = {}
         var title = '日销售额'
+        var title_order_count = '日销量'
         this.orderData['validate_order_list'].forEach(function (order) {
           var group_key = ''
           var crate_time_str = order['create_at'].replace('T', ' ').replace('Z', '')
@@ -290,12 +294,14 @@
             var year = crate_time.getUTCFullYear()
             group_key = year
             title = '年销售额'
+            title_order_count = '年销量'
 
           } else if (self.timeModel == 'month') {
             // 按照月组group统计图数据
             var month = crate_time.getUTCMonth() + 1
             group_key = crate_time.getUTCFullYear() + '年' + month.toString() + '月'
             title = '月销售额'
+            title_order_count = '月销量'
 
           } else if (self.timeModel == 'week') {
             // 按照周组group统计图数据
@@ -303,18 +309,22 @@
             var week = crate_time.getUTCFullYear() + '年' + origin_week.split('-')[0] + '月第' + origin_week.split('-')[1] + '周'
             group_key = week
             title = '周销售额'
+            title_order_count = '周销量'
 
           } else {
             // 按照日组group统计图数据
             var date = crate_time_str.split(' ')[0]
             group_key = date
             title = '日销售额'
+            title_order_count = '日销量'
           }
           var total = parseFloat(order['total'])
           if (group_dic.hasOwnProperty(group_key)) {
             group_dic[group_key] = group_dic[group_key] + total
+            order_count_group_dic[group_key] = order_count_group_dic[group_key] + 1
           } else {
             group_dic[group_key] = total
+            order_count_group_dic[group_key] = 1
           }
         })
 
@@ -325,6 +335,16 @@
           var dic = {'value': [key, total_sale]}
           dataList.push(dic)
         })
+
+        var sorted_count_keys = Object.keys(order_count_group_dic).sort()
+        this.orderCountData = []
+        sorted_count_keys.forEach(function (key) {
+          var order_count = order_count_group_dic[key]
+          var dic = {'value': [key, order_count]}
+          self.orderCountData.push(dic)
+        })
+
+        this.chartOrderCountData(title_order_count)
 
         if (sorted_keys.length > 15) {
           dataDic['rotate'] = 45
@@ -373,6 +393,48 @@
         dataDic['maxValue'] = this.customFormatDate(this.dateValue[1])
 
         chart.setOption(chartTimeStatistic(dataDic));
+      },
+
+      chartOrderCountData:function (title) {
+        var self = this
+        let chart = this.chartDic['ordercountInfo']
+        chart.hideLoading()
+
+        var dataDic = {}
+        if (this.orderCountData.length > 15) {
+          dataDic['rotate'] = 45
+        }
+
+        var serie_dic = {
+          'name':title,
+          'type':'bar',
+          'barWidth' : 30,
+          'itemStyle':{
+            'normal':{
+              'color': '#63a2c3',
+              'label': {
+                'show': true, //开启显示
+                'position': 'top', //在上方显示
+                'textStyle': { //数值样式
+                  'color': 'black',
+                  'fontSize': 12
+                }
+              }
+            },
+          },
+          'data': this.orderCountData,
+        }
+
+        dataDic['title'] = title
+        dataDic['subtitle'] = ''
+        dataDic['yUnit'] = 'CAD'
+        dataDic['series'] = [serie_dic]
+        dataDic['xAxisType'] = 'category'
+        dataDic['minValue'] = this.customFormatDate(this.dateValue[0])
+        dataDic['maxValue'] = this.customFormatDate(this.dateValue[1])
+
+        chart.setOption(chartTimeStatistic(dataDic));
+
       },
 
       chartOrderData:function () {
