@@ -228,7 +228,14 @@
             month = date.getMonth() + 1;
           }
         }
-        return `${month}-${week}`
+
+        var month_str = month <= 9 ? `0${month}` : month.toString()
+
+        var week_str = week <= 9 ? `0${week}` : week.toString()
+
+        var result = month_str + '-' + week_str
+
+        return result
       },
 
       updateSaleData:function () {
@@ -299,7 +306,8 @@
           } else if (self.timeModel == 'month') {
             // 按照月组group统计图数据
             var month = crate_time.getUTCMonth() + 1
-            group_key = crate_time.getUTCFullYear() + '年' + month.toString() + '月'
+            var month_str = month <= 9 ? `0${month}` : month.toString()
+            group_key = crate_time.getUTCFullYear() + '年' + month_str + '月'
             title = '月销售额'
             title_order_count = '月销量'
 
