@@ -154,7 +154,8 @@ def get_driver_delivered_order(request):
     total_count = 0
     for driver_order in driver_order_list_q:
         # 全额退款的忽略
-        if refund_dic.get(driver_order.order_id, None) and driver_order.total == refund_dic['driver_order.order_id']:
+        order_id_str = str(driver_order.order_id)
+        if refund_dic.get(order_id_str, None) and driver_order.total == refund_dic[order_id_str]:
             continue
         total_count += 1
         if driver_order_dic.get(driver_order.driver_id, None):
