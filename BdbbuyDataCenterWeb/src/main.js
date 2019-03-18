@@ -13,6 +13,8 @@ import inventoryWarning from './components/InventoryWarning/inventoryWarning.vue
 import saleData from './components/SaleData/saleData.vue'
 import orderData from './components/OrderData/OrderData.vue'
 import login from './components/Login/Login.vue'
+import driverData from './components/Driver/DriverData.vue'
+
 import serverBaseURL from './globalConfig.js'
 import FileSaver from 'file-saver'
 import XLSX from 'xlsx'
@@ -48,6 +50,10 @@ const router = new VueRouter({
     {
       path: '/login',
       component: login
+    },
+    {
+      path: '/driverData',
+      component: driverData
     },
 
   ]

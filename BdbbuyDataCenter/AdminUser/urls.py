@@ -7,5 +7,5 @@ from .views import *
 urlpatterns = [
 
     path('getAuth', getAdminUserAuth),
-
+    path('getDriver', getDriverInfo)
 ]

@@ -52,3 +52,22 @@ export function getTimeByTimeZone(timeZone) {
   // console.log("系统默认展示时间方式是：" + date);
   return date;
 }
+
+export function getMonthDays(month) {
+  var date = new Date()
+  var daysInMonth = new Array([0],[31],[28],[31],[30],[31],[30],[31],[31],[30],[31],[30],[31]);
+  var strYear = date.getUTCFullYear();
+  if(strYear%4 == 0 && strYear%100 != 0){
+    daysInMonth[2] = 29;
+  }
+
+  var past_days = 0
+  for (var i = month; i > 0; i--) {
+    var searchMonth = date.getUTCMonth()  - i;
+    searchMonth = searchMonth <= 0 ? searchMonth + 12:searchMonth;
+    past_days += parseInt(daysInMonth[searchMonth])
+  }
+
+  return past_days;
+
+}

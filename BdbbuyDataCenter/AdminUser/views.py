@@ -43,3 +43,7 @@ def getAdminUserAuth(request):
                 break
     return JsonResponse({'data': {'auth': auth_n, 'user_name': admin_user_name}})
 
+@require_http_methods(["GET"])
+def getDriverInfo(request):
+    driver_list = [driver.toInfoJson() for driver in Adminuser.getDriverList()]
+    return JsonResponse({"data": driver_list})

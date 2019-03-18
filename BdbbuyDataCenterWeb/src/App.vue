@@ -23,6 +23,11 @@
         销售统计
       </MenuItem>
 
+      <MenuItem name="driverData" id="driverData" v-bind:style="{display:displayType}">
+        <Icon type="md-car" />
+        司机端统计
+      </MenuItem>
+
     </Menu>
     <router-view></router-view>
   </div>
@@ -138,7 +143,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #f5f7f9;
   margin-top: 10px;
 }
 

@@ -18,3 +18,22 @@ class Adminuser(CModel):
     class Meta:
         managed = False
         db_table = 'adminuser'
+
+    def toInfoJson(self):
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
+    @classmethod
+    def getDriverList(cls):
+        return Adminuser.objects.filter(driver=1)
+
+    @classmethod
+    def getUserNameById(cls, user_id):
+        name = ''
+        admin_q = Adminuser.objects.filter(id=user_id)
+        if len(admin_q) > 0:
+            name = admin_q[0].name
+        return name
+

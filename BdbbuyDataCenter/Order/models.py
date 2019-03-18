@@ -1,9 +1,13 @@
 from django.db import models
 
+import json
 
 #custom
 from Tools.model_util import CModel
 from enum import Enum
+
+from Other.models import Area
+from AdminUser.models import Adminuser
 # Create your models here.
 
 class OrderStatus(Enum):
@@ -14,6 +18,7 @@ class OrderStatus(Enum):
     OrderDelete = '5'  # 删除
     OrderTimeout = '6'  # 超时
     OrderRefunded = '7'  # 已退款
+    OrderCommented = '8'  # 已评价
 
 
 class MgOrder(CModel):
@@ -104,6 +109,49 @@ class Orders(CModel):
     class Meta:
         managed = False
         db_table = 'orders'
+
+    def toJson(self):
+        area = ""
+        area_q = Area.objects.filter(id=self.area_id)
+        if len(area_q) > 0:
+            area = area_q[0].name
+
+        status = self.getStatusStr(self.status)
+        shipping_add = json.loads(self.shipping_address)
+        customer_name = shipping_add['first_name'] + ' ' + shipping_add['last_name']
+        driver = Adminuser.getUserNameById(self.driver_id)
+
+        return {
+            'order_id': self.order_id,
+            'area': area,
+            'customer_id': self.customer_id,
+            'status': status,
+            'customer_name': customer_name,
+            'total': self.total,
+            'city': shipping_add['city'],
+            'post_code': shipping_add['post_code'],
+            'address': shipping_add['street'],
+            'driver': driver,
+            'driver_id': self.driver_id
+        }
+
+    def getStatusStr(self, status=OrderStatus):
+        if status == OrderStatus.OrderNotPay.value:
+            return "待支付"
+        elif status == OrderStatus.OrderWaitDelivery.value:
+            return "待发货"
+        elif status == OrderStatus.OrderDeliverying.value:
+            return "待配送"
+        elif status == OrderStatus.OrderWaitComment.value:
+            return "待评价"
+        elif status == OrderStatus.OrderDelete.value:
+            return "已删除"
+        elif status == OrderStatus.OrderTimeout.value:
+            return "超时"
+        elif status == OrderStatus.OrderRefunded.value:
+            return "已退款"
+        elif status == OrderStatus.OrderCommented.value:
+            return "已评价"
 
 
 class OrdersTest(CModel):

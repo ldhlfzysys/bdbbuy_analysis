@@ -16,6 +16,7 @@ from django.db.models import Q
 # custom
 from .models import *
 from Other.models import Area, Refunds
+from AdminUser.models import Adminuser
 
 
 
@@ -113,6 +114,68 @@ def get_order_list(request):
                                    'refund_order': refund_order, 'area_info': area_info, 'order_rate': order_rate,
                                    'order_total': order_total, 'refund_total': refund_total},
                              ))
+
+
+@require_http_methods(["GET"])
+def get_driver_delivered_order(request):
+    default_from_date = datetime.now().replace(hour=0, minute=0, second=0)
+    search_from_date = request.GET.get('fromDate', default_from_date)
+    search_to_date = request.GET.get('toDate', datetime.now())
+    timestamp1 = string2timestamp(search_from_date)
+    timestamp2 = string2timestamp(search_to_date)
+
+    last_timestamp = timestamp1 - (timestamp2 - timestamp1)
+    dt = timestamp_datetime(last_timestamp).replace(tzinfo=timezone.utc)
+
+    search_to_datetime = timestamp_datetime(timestamp2).replace(tzinfo=timezone.utc)
+    search_from_datetime = timestamp_datetime(timestamp1).replace(tzinfo=timezone.utc)
+
+    driver_order_list = []
+    driver_list = [driver.id for driver in Adminuser.getDriverList()]
+    driver_order_list_q = Orders.objects.filter(Q(create_at__range=(dt, search_to_datetime)),
+                                                Q(status__in=[OrderStatus.OrderWaitComment.value,
+                                                              OrderStatus.OrderCommented.value,
+                                                              OrderStatus.OrderDelete.value,
+                                                              OrderStatus.OrderRefunded.value]),
+                                                Q(driver_id__in=driver_list))
+
+    refund_list = Refunds.objects.filter(order_id__in=[order.order_id for order in driver_order_list_q])\
+        .values('refund', 'order_id')
+
+    refund_dic = {}
+    for refund in refund_list:
+        order_id = str(refund['order_id'])
+        if refund_dic.get(order_id, None):
+            refund_dic[order_id] = refund_dic[order_id] + refund['refund']
+        else:
+            refund_dic[order_id] = refund['refund']
+
+    driver_order_dic = {}
+    total_count = 0
+    for driver_order in driver_order_list_q:
+        # 全额退款的忽略
+        if refund_dic.get(driver_order.order_id, None) and driver_order.total == refund_dic['driver_order.order_id']:
+            continue
+        total_count += 1
+        if driver_order_dic.get(driver_order.driver_id, None):
+            list = driver_order_dic[driver_order.driver_id]['order_list']
+            list.append(driver_order.toJson())
+            driver_order_dic[driver_order.driver_id]['order_list'] = list
+            driver_order_dic[driver_order.driver_id]['count'] += 1
+        else:
+            dic = {
+                'order_list': [driver_order.toJson()],
+                'count': 1,
+                'driver_name': Adminuser.getUserNameById(user_id=driver_order.driver_id)
+            }
+            driver_order_dic[driver_order.driver_id] = dic
+
+    for (key, value) in driver_order_dic.items():
+        value_dic = value
+        value_dic['driver_id'] = key
+        driver_order_list.append(value_dic)
+
+    return JsonResponse({'data': {'driver_list': driver_order_list, 'total_count': total_count}})
 
 
 
