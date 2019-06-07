@@ -91,7 +91,7 @@
         allProductList: [],
         pageType: 'count',
         countInfo: 5,
-        orderDay: 7,
+        orderDay: 14,
         pageCurrent: 1,
         tableLoading: false,
         cancelTokenFn: null
